@@ -1239,6 +1239,11 @@ textarea.cell-native-text {
     --header-height: calc(56px + env(safe-area-inset-top, 0px));
   }
 
+  body {
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
   .app-header__menu-btn {
     display: inline-flex;
   }
@@ -1343,16 +1348,76 @@ textarea.cell-native-text {
     align-items: stretch;
     gap: 12px;
     padding: 12px 16px 10px;
+    padding-left: max(16px, env(safe-area-inset-left));
+    padding-right: max(16px, env(safe-area-inset-right));
+  }
+
+  .page-header__title {
+    font-size: 17px;
+    line-height: 1.35;
   }
 
   .page-header__actions {
     justify-content: flex-start;
     flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .page-header__actions .btn {
+    min-height: 44px;
+    padding: 10px 16px;
+    font-size: 14px;
   }
 
   .toolbar {
     padding: 10px 12px;
     gap: 8px;
+    padding-left: max(12px, env(safe-area-inset-left));
+    padding-right: max(12px, env(safe-area-inset-right));
+  }
+
+  .toolbar-filters {
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+    gap: 12px;
+  }
+
+  .toolbar-filter {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .toolbar__select--multi {
+    max-width: none;
+    width: 100%;
+    min-height: 108px;
+    max-height: 140px;
+  }
+
+  .toolbar__actions-end {
+    margin-left: 0;
+    width: 100%;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .toolbar--complete-sheet {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .toolbar-filter--month {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .toolbar__month-input {
+    width: 100%;
+    min-height: 44px;
+    font-size: 16px;
   }
 
   .toolbar__search {
@@ -1370,12 +1435,143 @@ textarea.cell-native-text {
     text-align: right;
   }
 
+  /* ----- 案件シート: スマホでヘッダー／絞り込みを低くし表を最大化 ----- */
+  body[data-nav="cases"] .page-header {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    padding-left: max(12px, env(safe-area-inset-left));
+    padding-right: max(12px, env(safe-area-inset-right));
+  }
+
+  body[data-nav="cases"] .page-header > div:first-child {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  body[data-nav="cases"] .page-header__title {
+    font-size: 16px;
+    line-height: 1.25;
+  }
+
+  body[data-nav="cases"] .page-header__actions {
+    flex: 1 1 100%;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    gap: 6px;
+    padding-bottom: 2px;
+    scrollbar-width: thin;
+  }
+
+  body[data-nav="cases"] .page-header__actions .btn {
+    min-height: 38px;
+    padding: 6px 12px;
+    font-size: 12px;
+    flex-shrink: 0;
+  }
+
+  body[data-nav="cases"] .toolbar {
+    align-items: stretch;
+    padding: 6px 10px;
+    gap: 6px;
+    padding-left: max(10px, env(safe-area-inset-left));
+    padding-right: max(10px, env(safe-area-inset-right));
+  }
+
+  body[data-nav="cases"] .toolbar__search {
+    flex: 1 1 100%;
+  }
+
+  body[data-nav="cases"] .toolbar-filters {
+    flex-direction: row;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    gap: 10px;
+    width: 100%;
+    padding: 2px 0 4px;
+    margin: 0;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x proximity;
+    scrollbar-width: thin;
+  }
+
+  body[data-nav="cases"] .toolbar-filter {
+    flex: 0 0 min(82vw, 280px);
+    width: auto;
+    scroll-snap-align: start;
+  }
+
+  body[data-nav="cases"] .toolbar-filter__label {
+    font-size: 10px;
+    margin-bottom: 1px;
+  }
+
+  body[data-nav="cases"] .toolbar__select--multi {
+    min-height: 64px;
+    max-height: 80px;
+    padding: 4px 6px;
+  }
+
+  body[data-nav="cases"] .toolbar__actions-end {
+    flex-wrap: nowrap;
+    width: 100%;
+    gap: 8px;
+  }
+
+  body[data-nav="cases"] .toolbar__actions-end .btn--sm {
+    min-height: 40px;
+    flex-shrink: 0;
+  }
+
+  body[data-nav="cases"] .toolbar__count {
+    width: auto;
+    flex: 1;
+    min-width: 0;
+    text-align: right;
+    white-space: nowrap;
+    font-size: 11px;
+  }
+
+  body[data-nav="cases"] .table-container {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    flex: 1 1 auto;
+    padding: 6px 10px;
+    padding-left: max(10px, env(safe-area-inset-left));
+    padding-right: max(10px, env(safe-area-inset-right));
+  }
+
+  body[data-nav="cases"] .table-container__bar {
+    flex-shrink: 0;
+    margin-bottom: 6px;
+  }
+
+  body[data-nav="cases"] .table-wrapper {
+    flex: 1 1 auto;
+    min-height: 0;
+    max-height: none !important;
+  }
+
+  body[data-nav="cases"] .table-footer {
+    flex-shrink: 0;
+    padding: 8px 10px;
+    padding-bottom: max(8px, env(safe-area-inset-bottom));
+    gap: 8px;
+  }
+
   /* iOS: フォーカス時の自動ズーム防止（16px以上） */
   .toolbar__search-input,
   .toolbar__select,
   .cell-native-select,
   .cell-inline-input,
   .cell-inline-select,
+  .cell-native-text,
+  .cell-native-date,
+  input.cell-native-month,
   .page-search input,
   .page-filters select,
   .dash-select {
@@ -1418,19 +1614,59 @@ textarea.cell-native-text {
     max-height: calc(100vh - var(--header-height) - 220px);
     -webkit-overflow-scrolling: touch;
     touch-action: pan-x pan-y;
+    overscroll-behavior-x: contain;
   }
 
-  /* 左固定列をスマホ幅に合わせて縮小 */
+  /* 左固定列をスマホ幅に合わせて縮小（はみ出しは省略・スクロール領域を確保） */
   .data-table {
-    --sticky-w-rownum: 34px;
-    --sticky-w-est: 52px;
-    --sticky-w-client: 92px;
-    --sticky-w-property: 108px;
+    --sticky-w-rownum: 26px;
+    --sticky-w-est: 40px;
+    --sticky-w-client: 58px;
+    --sticky-w-property: 58px;
     font-size: 11px;
   }
 
+  .data-table .col-sticky-1 {
+    max-width: var(--sticky-w-rownum);
+  }
+
+  .data-table .col-sticky-2 {
+    max-width: var(--sticky-w-est);
+  }
+
+  .data-table .col-sticky-3 {
+    max-width: var(--sticky-w-client);
+  }
+
+  .data-table .col-sticky-4 {
+    max-width: var(--sticky-w-property);
+  }
+
+  .data-table thead .col-sticky-2,
+  .data-table thead .col-sticky-3,
+  .data-table thead .col-sticky-4 {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .data-table tbody td.col-sticky-2,
+  .data-table tbody td.col-sticky-3,
+  .data-table tbody td.col-sticky-4 {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: var(--sticky-w-est);
+  }
+
+  .data-table tbody td.col-sticky-3 {
+    max-width: var(--sticky-w-client);
+  }
+
+  .data-table tbody td.col-sticky-4 {
+    max-width: var(--sticky-w-property);
+  }
+
   .data-table thead tr:first-child th {
-    padding: 8px 6px;
+    padding: 6px 4px;
     font-size: 10px;
   }
 
@@ -1438,6 +1674,11 @@ textarea.cell-native-text {
     padding: 6px 6px;
     min-width: 68px;
     font-size: 11px;
+  }
+
+  .data-table tbody td.col-sticky {
+    padding-left: 4px;
+    padding-right: 4px;
   }
 
   .cell-estimate-no {
@@ -1470,6 +1711,69 @@ textarea.cell-native-text {
     left: 12px;
     width: auto;
     max-width: none;
+    max-height: min(75dvh, 480px);
+    padding-bottom: max(12px, env(safe-area-inset-bottom));
+  }
+
+  .btn--sm {
+    min-height: 40px;
+    padding: 8px 14px;
+    font-size: 13px;
+  }
+
+  .sidebar-nav__link {
+    min-height: 44px;
+    padding: 12px 14px;
+    font-size: 14px;
+  }
+
+  .sidebar-section-label {
+    font-size: 11px;
+    padding-left: max(16px, env(safe-area-inset-left));
+  }
+
+  .sidebar-nav {
+    padding-left: max(8px, env(safe-area-inset-left));
+    padding-right: max(8px, env(safe-area-inset-right));
+  }
+
+  .case-invoice-dialog {
+    width: calc(100vw - 20px);
+    max-width: 400px;
+    margin: auto;
+  }
+
+  .case-invoice-dialog__form {
+    padding: 18px 16px;
+    padding-bottom: max(18px, env(safe-area-inset-bottom));
+  }
+
+  .case-invoice-dialog__title {
+    font-size: 1.15rem;
+  }
+
+  .case-invoice-dialog__actions {
+    flex-direction: column-reverse;
+    align-items: stretch;
+    gap: 10px;
+    margin-top: 18px;
+  }
+
+  .case-invoice-dialog__actions .btn {
+    width: 100%;
+    justify-content: center;
+    min-height: 48px;
+    font-size: 15px;
+  }
+
+  .complete-category-summary {
+    padding: 0 12px 14px;
+    padding-left: max(12px, env(safe-area-inset-left));
+    padding-right: max(12px, env(safe-area-inset-right));
+  }
+
+  .app-main {
+    padding-bottom: env(safe-area-inset-bottom);
   }
 }
 
@@ -1485,6 +1789,28 @@ textarea.cell-native-text {
 
   .page-header__title {
     font-size: 16px;
+  }
+
+  .data-table {
+    --sticky-w-rownum: 22px;
+    --sticky-w-est: 34px;
+    --sticky-w-client: 48px;
+    --sticky-w-property: 48px;
+    font-size: 12px;
+  }
+
+  .data-table thead tr:first-child th {
+    font-size: 10px;
+    padding: 5px 3px;
+  }
+
+  .data-table tbody td {
+    font-size: 12px;
+  }
+
+  .data-table tbody td.col-sticky {
+    padding-left: 3px;
+    padding-right: 3px;
   }
 }
 

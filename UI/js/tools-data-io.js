@@ -1,3 +1,4 @@
+/** データ入出力ページ: 現状メニュー・ヘッダから未リンク。復活時は tools-data-io.html へ導線を追加。 */
 document.addEventListener('DOMContentLoaded', () => {
   if (!window.TocDataStore) return;
   TocDataStore.ensureInit();

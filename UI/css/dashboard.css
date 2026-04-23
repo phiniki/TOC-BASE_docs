@@ -727,7 +727,9 @@
 
 @media (max-width: 768px) {
   .dashboard-inner {
-    padding: 0 12px 20px;
+    padding: 0 12px max(20px, env(safe-area-inset-bottom));
+    padding-left: max(12px, env(safe-area-inset-left));
+    padding-right: max(12px, env(safe-area-inset-right));
   }
 
   .dash-period-bar {
@@ -743,32 +745,145 @@
   .dash-period-bar__note {
     margin-left: 0;
     flex-basis: 100%;
-    font-size: 10px;
+    font-size: 11px;
+    line-height: 1.45;
+  }
+
+  .dash-select {
+    min-height: 44px;
+    font-size: 16px;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .dash-fy-badge {
+    font-size: 12px;
+    padding: 6px 12px;
+    line-height: 1.3;
   }
 
   .dash-section__head {
     padding: 12px 14px;
+    align-items: flex-start;
   }
 
   .dash-section__titles h2 {
-    font-size: 14px;
+    font-size: 15px;
+    line-height: 1.35;
+  }
+
+  .dash-section__titles p {
+    font-size: 12px;
+    line-height: 1.45;
   }
 
   .dash-section__body {
     padding: 12px;
   }
 
+  .dash-hint {
+    font-size: 12px;
+  }
+
+  .kpi-panel {
+    padding: 14px;
+  }
+
+  .kpi-metric__k {
+    font-size: 11px;
+  }
+
+  .kpi-metric__v {
+    font-size: 17px;
+  }
+
   .kpi-metrics {
     grid-template-columns: 1fr;
+    gap: 12px;
   }
 
   .goal-progress-block {
     margin-top: 12px;
   }
 
+  .goal-summary-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    font-size: 12px;
+  }
+
+  .goal-bar-row__top {
+    flex-wrap: wrap;
+    gap: 6px;
+    font-size: 12px;
+  }
+
+  .dash-chart-canvas {
+    height: 240px;
+  }
+
+  .dash-metric-tabs {
+    gap: 8px;
+  }
+
+  .dash-metric-tab {
+    flex: 1 1 calc(50% - 4px);
+    min-height: 44px;
+    padding: 10px 8px;
+    font-size: 12px;
+    text-align: center;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .dash-table {
+    font-size: 12px;
+  }
+
+  .dash-table th,
+  .dash-table td {
+    padding: 8px 6px;
+  }
+
+  .dash-table thead th {
+    font-size: 11px;
+  }
+
+  .dash-table--staff-matrix {
+    font-size: 11px;
+  }
+
+  .dash-table--staff-matrix th,
+  .dash-table--staff-matrix td {
+    padding: 7px 6px;
+  }
+
   .matrix-wrap {
     margin: 0 -4px;
     border-radius: 6px;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+  }
+
+  .matrix-table {
+    font-size: 11px;
+  }
+
+  .matrix-table th,
+  .matrix-table td {
+    padding: 7px 6px;
+  }
+
+  .matrix-cell-stack {
+    gap: 3px;
+  }
+
+  .matrix-cell-stack span:not(.lbl) {
+    font-size: 11px;
+  }
+
+  .matrix-cell-stack .lbl {
+    font-size: 10px;
   }
 
   .segment-tabs {
@@ -778,7 +893,10 @@
   .segment-tabs button {
     flex: 1;
     text-align: center;
-    padding: 10px 8px;
+    padding: 12px 8px;
+    min-height: 48px;
+    font-size: 13px;
+    -webkit-tap-highlight-color: transparent;
   }
 
   .procure-toolbar {

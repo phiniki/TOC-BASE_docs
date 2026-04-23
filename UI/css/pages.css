@@ -623,10 +623,20 @@ a.link-action {
 }
 
 @media (max-width: 768px) {
+  .app-main.page-scroll {
+    -webkit-overflow-scrolling: touch;
+  }
+
   .page-toolbar {
     padding: 10px 12px;
     padding-left: max(12px, env(safe-area-inset-left));
     padding-right: max(12px, env(safe-area-inset-right));
+    gap: 12px;
+  }
+
+  .page-toolbar__grow {
+    flex: 1 1 100%;
+    min-width: 0;
   }
 
   .page-search {
@@ -634,18 +644,34 @@ a.link-action {
     min-width: 0;
   }
 
+  .page-filters {
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .page-filters select {
+    width: 100%;
+    min-height: 44px;
+    font-size: 16px;
+  }
+
   .list-table-wrap {
     padding: 12px;
     padding-bottom: max(12px, env(safe-area-inset-bottom));
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
   }
 
   .list-table {
-    font-size: 11px;
+    font-size: 12px;
   }
 
   .list-table thead th,
   .list-table tbody td {
-    padding: 8px 8px;
+    padding: 10px 8px;
   }
 
   .form-sheet-wrap {
@@ -655,5 +681,76 @@ a.link-action {
 
   .form-sheet__body {
     padding: 14px;
+  }
+
+  .form-field label,
+  .form-field .form-label {
+    font-size: 12px;
+  }
+
+  .form-field input[type="text"],
+  .form-field input[type="number"],
+  .form-field input[type="date"],
+  .form-field input[type="month"],
+  .form-field input[type="email"],
+  .form-field select,
+  .form-field textarea {
+    font-size: 16px;
+    min-height: 44px;
+    padding: 10px 12px;
+  }
+
+  .form-field textarea {
+    min-height: 96px;
+    resize: vertical;
+  }
+
+  .form-field select.form-select-multi {
+    min-height: 140px;
+    font-size: 15px;
+  }
+
+  .form-actions {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .form-actions .btn {
+    width: 100%;
+    justify-content: center;
+    min-height: 48px;
+    font-size: 15px;
+  }
+
+  .purchase-page-header {
+    padding: 14px 16px;
+    padding-left: max(16px, env(safe-area-inset-left));
+    padding-right: max(16px, env(safe-area-inset-right));
+  }
+
+  .purchase-page-header__title {
+    font-size: 18px;
+    line-height: 1.3;
+  }
+
+  .purchase-mode-tabs {
+    padding: 0 12px 12px;
+    gap: 8px;
+    padding-left: max(12px, env(safe-area-inset-left));
+    padding-right: max(12px, env(safe-area-inset-right));
+  }
+
+  .purchase-mode-tabs__btn {
+    flex: 1 1 auto;
+    min-height: 44px;
+    padding: 10px 12px;
+    font-size: 13px;
+    text-align: center;
+  }
+
+  .purchase-case-panel {
+    margin: 12px 12px 0;
+    padding: 14px 16px;
   }
 }

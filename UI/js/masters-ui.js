@@ -160,15 +160,9 @@
         .map(s => {
           return (
             '<tr>' +
-            '<td class="num">' +
-            escapeHtml(s.code) +
-            '</td>' +
             '<td><strong>' +
             escapeHtml(s.name) +
             '</strong></td>' +
-            '<td>' +
-            escapeHtml(s.email) +
-            '</td>' +
             '<td>' +
             roleDot(s.salesOk, 'blue') +
             '</td>' +
@@ -191,36 +185,31 @@
   }
 
   function initStaffForm() {
-    const sc = document.getElementById('scode');
-    if (!sc) return;
+    if (!document.getElementById('btnSaveMasterStaff')) return;
     const p = new URLSearchParams(location.search);
-    const code = p.get('code');
-    let editingCode = code;
+    const codeParam = p.get('code');
     const $ = id => document.getElementById(id);
 
-    if (code) {
-      const s = TocDataStore.getState().staff.find(x => x.code === code);
-      if (s) {
-        $('scode').value = s.code;
-        $('sstat').value = s.status;
-        $('sname').value = s.name;
-        $('smail').value = s.email || '';
-        $('sphone').value = s.phone || '';
-        $('sjoin').value = s.joined || '';
-        if ($('chkSalesOk')) $('chkSalesOk').checked = !!s.salesOk;
-        if ($('chkDesignOk')) $('chkDesignOk').checked = !!s.designOk;
-      }
+    const existing =
+      codeParam && TocDataStore.getState().staff.find(x => x.code === codeParam);
+    const fixedCode = existing ? existing.code : null;
+
+    if (existing) {
+      $('sstat').value = existing.status;
+      $('sname').value = existing.name;
+      $('sphone').value = existing.phone || '';
+      $('sjoin').value = existing.joined || '';
+      if ($('chkSalesOk')) $('chkSalesOk').checked = !!existing.salesOk;
+      if ($('chkDesignOk')) $('chkDesignOk').checked = !!existing.designOk;
     } else {
-      $('scode').value = TocDataStore.nextStaffCode();
       if ($('chkSalesOk')) $('chkSalesOk').checked = true;
     }
 
     $('btnSaveMasterStaff')?.addEventListener('click', () => {
       const row = {
-        code: $('scode').value.trim(),
+        code: fixedCode || TocDataStore.nextStaffCode(),
         status: $('sstat').value,
         name: $('sname').value.trim(),
-        email: $('smail').value.trim(),
         phone: $('sphone').value.trim(),
         joined: $('sjoin').value,
         salesOk: $('chkSalesOk') ? $('chkSalesOk').checked : false,
@@ -228,11 +217,6 @@
       };
       if (!row.name) {
         alert('氏名は必須です。');
-        return;
-      }
-      if (!row.code) row.code = TocDataStore.nextStaffCode();
-      if (editingCode && editingCode !== row.code) {
-        alert('社員コードの変更は非対応です。');
         return;
       }
       TocDataStore.upsertStaff(row);

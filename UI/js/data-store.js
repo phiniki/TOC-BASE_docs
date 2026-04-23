@@ -235,14 +235,14 @@
 
   function defaultStaff() {
     return [
-      { code: 'E-001', name: '田中 健二', email: 'tanaka@toc.example.jp', salesOk: true, designOk: false, status: '在籍' },
-      { code: 'E-002', name: '佐藤 裕子', email: 'sato@toc.example.jp', salesOk: true, designOk: false, status: '在籍' },
-      { code: 'E-003', name: '渡辺 誠', email: 'watanabe@toc.example.jp', salesOk: true, designOk: false, status: '在籍' },
-      { code: 'E-004', name: '高橋 美咲', email: 'takahashi@toc.example.jp', salesOk: true, designOk: false, status: '在籍' },
-      { code: 'E-101', name: '山田 麻衣', email: 'yamada@toc.example.jp', salesOk: false, designOk: true, status: '在籍' },
-      { code: 'E-102', name: '木村 拓也', email: 'kimura@toc.example.jp', salesOk: false, designOk: true, status: '在籍' },
-      { code: 'E-103', name: '鈴木 奈緒', email: 'suzuki@toc.example.jp', salesOk: false, designOk: true, status: '在籍' },
-      { code: 'E-201', name: '谷口 太郎', email: 'taniguchi@toc.example.jp', salesOk: false, designOk: false, status: '在籍' },
+      { code: 'E-001', name: '田中 健二', salesOk: true, designOk: false, status: '在籍' },
+      { code: 'E-002', name: '佐藤 裕子', salesOk: true, designOk: false, status: '在籍' },
+      { code: 'E-003', name: '渡辺 誠', salesOk: true, designOk: false, status: '在籍' },
+      { code: 'E-004', name: '高橋 美咲', salesOk: true, designOk: false, status: '在籍' },
+      { code: 'E-101', name: '山田 麻衣', salesOk: false, designOk: true, status: '在籍' },
+      { code: 'E-102', name: '木村 拓也', salesOk: false, designOk: true, status: '在籍' },
+      { code: 'E-103', name: '鈴木 奈緒', salesOk: false, designOk: true, status: '在籍' },
+      { code: 'E-201', name: '谷口 太郎', salesOk: false, designOk: false, status: '在籍' },
     ];
   }
 
@@ -346,7 +346,20 @@
     migrateStripTransferPeriod(state);
     migrateGoalsFiscalYearLabel(state);
     migrateStripStaffTitle(state);
+    migrateStripStaffEmail(state);
     return state;
+  }
+
+  function migrateStripStaffEmail(state) {
+    if (!state || !Array.isArray(state.staff)) return;
+    let changed = false;
+    state.staff.forEach(s => {
+      if (s && Object.prototype.hasOwnProperty.call(s, 'email')) {
+        delete s.email;
+        changed = true;
+      }
+    });
+    if (changed) save(state);
   }
 
   function migrateStripStaffTitle(state) {
@@ -597,11 +610,13 @@
     const merged = { ...row };
     delete merged.dept;
     delete merged.title;
+    delete merged.email;
     const i = state.staff.findIndex(x => x.code === merged.code);
     if (i >= 0) {
       state.staff[i] = { ...state.staff[i], ...merged };
       delete state.staff[i].dept;
       delete state.staff[i].title;
+      delete state.staff[i].email;
     } else {
       state.staff.push(merged);
     }
