@@ -1,0 +1,659 @@
+/* ===== マスタ・レポート共通ページレイアウト ===== */
+.app-main.page-scroll {
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.page-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  min-height: 0;
+  flex: 1;
+}
+
+.page-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 24px;
+  background: var(--color-main-bg);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.page-toolbar__grow {
+  flex: 1;
+  min-width: 120px;
+}
+
+.page-search {
+  position: relative;
+  flex: 0 1 280px;
+}
+
+.page-search input {
+  width: 100%;
+  padding: 6px 10px 6px 32px;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  font-size: 12px;
+  background: #f8fafc;
+}
+
+.page-search input:focus {
+  outline: none;
+  border-color: var(--color-sidebar-active);
+  background: #fff;
+}
+
+.page-search__icon {
+  position: absolute;
+  left: 9px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 12px;
+  opacity: 0.5;
+}
+
+.page-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.page-filters label {
+  font-size: 11px;
+  color: #64748b;
+  white-space: nowrap;
+}
+
+.page-filters select {
+  padding: 5px 22px 5px 8px;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  font-size: 12px;
+  background: #f8fafc;
+  cursor: pointer;
+}
+
+/* 仕入登録（3モード） */
+.purchase-page-header {
+  padding: 16px 24px;
+  background: #fff;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.purchase-page-header__title {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.purchase-mode-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 0 24px 12px;
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-main-bg);
+}
+
+.purchase-mode-tabs__btn {
+  padding: 6px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #475569;
+  background: #f8fafc;
+  cursor: pointer;
+}
+
+.purchase-mode-tabs__btn:hover {
+  background: #f1f5f9;
+}
+
+.purchase-mode-tabs__btn.is-active {
+  border-color: var(--color-sidebar-active);
+  color: #1e40af;
+  background: #eff6ff;
+}
+
+.purchase-panel {
+  flex: 1;
+  min-height: 0;
+  flex-direction: column;
+}
+
+/* [hidden] 既定の display:none を .purchase-panel の display:flex が上書きしないよう明示 */
+.purchase-panel[hidden] {
+  display: none !important;
+}
+
+.purchase-panel:not([hidden]) {
+  display: flex;
+}
+
+.purchase-case-panel {
+  margin: 16px 24px 0;
+  padding: 16px 20px;
+  background: #f8fafc;
+  border: 1px solid var(--color-border, #e2e8f0);
+  border-radius: 10px;
+  max-width: 720px;
+}
+
+.purchase-case-grid {
+  display: grid;
+  grid-template-columns: 100px 1fr;
+  gap: 10px 16px;
+  align-items: center;
+  font-size: 14px;
+}
+
+.purchase-case-grid__k {
+  color: #64748b;
+  font-size: 12px;
+}
+
+.purchase-case-grid__v {
+  font-weight: 500;
+}
+
+.purchase-toolbar {
+  margin: 12px 0 0 !important;
+  border-bottom: none !important;
+  padding-left: 24px !important;
+  padding-right: 24px !important;
+}
+
+.purchase-toolbar__start {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.purchase-toolbar__totals {
+  margin-left: auto;
+  font-size: 12px;
+  color: #64748b;
+}
+
+.purchase-panel--invoice {
+  overflow: auto;
+}
+
+.purchase-invoice-split {
+  padding: 0 24px;
+}
+
+.purchase-invoice-split--top {
+  padding-top: 16px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid #e2e8f0;
+  background: linear-gradient(180deg, #f8fafc 0%, #fff 100%);
+}
+
+.purchase-invoice-split--bottom {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding-top: 16px;
+  padding-bottom: 24px;
+}
+
+.purchase-section-title {
+  margin: 0 0 8px;
+  font-size: 15px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.purchase-section-lead {
+  margin: 0 0 12px;
+  font-size: 12px;
+  color: #475569;
+  line-height: 1.55;
+  max-width: 900px;
+}
+
+.purchase-section-lead strong {
+  color: #1e40af;
+  font-weight: 600;
+}
+
+.list-table-wrap--invoice-keys {
+  flex: 0 0 auto;
+  padding: 0 0 16px;
+  max-height: min(40vh, 320px);
+  overflow: auto;
+}
+
+.list-table-wrap--invoice-detail {
+  flex: 1;
+  min-height: 120px;
+  padding: 0;
+}
+
+.purchase-invoice-editor {
+  margin-bottom: 8px;
+  padding: 14px 16px;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 10px;
+}
+
+.purchase-invoice-editor__label {
+  font-size: 12px;
+  font-weight: 700;
+  color: #1e40af;
+  margin-bottom: 10px;
+}
+
+.purchase-invoice-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px 16px;
+  padding: 16px 24px 0;
+}
+
+.purchase-invoice-toolbar--editor {
+  padding: 0;
+  align-items: flex-end;
+}
+
+.purchase-invoice-toolbar__field label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: #334155;
+  margin-bottom: 6px;
+}
+
+.purchase-invoice-toolbar__field--grow {
+  flex: 1;
+  min-width: 200px;
+}
+
+.purchase-invoice-toolbar__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 8px;
+  padding-bottom: 2px;
+}
+
+.purchase-invoice-select {
+  min-width: 240px;
+  max-width: 100%;
+}
+
+.purchase-invoice-date {
+  min-width: 160px;
+}
+
+.purchase-field-hint {
+  display: block;
+  margin-top: 4px;
+  font-size: 10px;
+  color: #64748b;
+}
+
+.purchase-toolbar--invoice-detail {
+  margin-top: 12px !important;
+}
+
+.purchase-subheading {
+  margin: 16px 24px 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.invoice-key-row {
+  cursor: pointer;
+}
+
+.invoice-key-row:hover td {
+  background: #f8fafc;
+}
+
+.invoice-key-row.is-selected td {
+  background: #eff6ff;
+}
+
+.list-table--compact tbody td {
+  padding: 6px 10px;
+  font-size: 12px;
+}
+
+/* シンプル一覧テーブル（案件一覧より軽量） */
+.list-table-wrap {
+  flex: 1;
+  padding: 16px 24px 24px;
+  overflow: auto;
+}
+
+.list-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  background: #fff;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+}
+
+.list-table thead th {
+  background: var(--color-th-bg);
+  color: var(--color-th-text);
+  text-align: left;
+  padding: 10px 12px;
+  font-weight: 600;
+  font-size: 11px;
+  border-bottom: 2px solid #1a2a50;
+}
+
+.list-table tbody td {
+  padding: 9px 12px;
+  border-bottom: 1px solid #e8ecf4;
+  vertical-align: middle;
+}
+
+.list-table tbody tr:nth-child(even) {
+  background: #f8fafc;
+}
+
+.list-table tbody tr:hover {
+  background: #eef2ff;
+}
+
+.list-table .num {
+  text-align: right;
+  font-family: var(--font-mono);
+}
+
+.list-table .actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.link-action {
+  background: none;
+  border: none;
+  color: var(--color-sidebar-active);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: underline;
+}
+
+a.link-action {
+  display: inline;
+}
+
+.link-action:hover {
+  color: #2563eb;
+}
+
+/* 月次集計：ハイライト行 */
+.list-table tfoot th,
+.list-table tfoot td {
+  background: #1e3a5f;
+  color: #e8eef7;
+  font-weight: 700;
+  border-bottom: none;
+}
+
+.list-table tbody tr.row-total td {
+  background: #fef3c7;
+  font-weight: 700;
+}
+
+.metric--warn {
+  color: #dc2626;
+  font-weight: 600;
+}
+
+/* ===== 登録・編集フォーム（全画面） ===== */
+.form-sheet-wrap {
+  flex: 1;
+  padding: 16px 24px 32px;
+  overflow: auto;
+  max-width: 1100px;
+}
+
+.form-sheet {
+  background: #fff;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+}
+
+.form-sheet__head {
+  padding: 14px 20px;
+  background: linear-gradient(135deg, #1e3a5f 0%, #2d4a6f 100%);
+  color: #e8eef7;
+}
+
+.form-sheet__head h2 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.form-sheet__head p {
+  margin: 6px 0 0;
+  font-size: 12px;
+  opacity: 0.88;
+}
+
+.form-sheet__body {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.form-section {
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 14px 16px;
+  background: #fafbfc;
+}
+
+.form-section__title {
+  font-size: 12px;
+  font-weight: 700;
+  color: #1e3a5f;
+  letter-spacing: 0.04em;
+  margin: 0 0 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px 20px;
+}
+
+@media (max-width: 720px) {
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.form-field--full {
+  grid-column: 1 / -1;
+}
+
+.form-field label,
+.form-field .form-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #475569;
+}
+
+.form-field .req {
+  color: #dc2626;
+  font-weight: 700;
+  margin-left: 2px;
+}
+
+.form-field select.form-select-multi {
+  min-height: 132px;
+  padding: 6px 8px;
+}
+
+.form-field input[type="text"],
+.form-field input[type="number"],
+.form-field input[type="date"],
+.form-field input[type="month"],
+.form-field select,
+.form-field textarea {
+  padding: 8px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  font-size: 13px;
+  background: #fff;
+  font-family: inherit;
+}
+
+.form-field textarea {
+  min-height: 72px;
+  resize: vertical;
+}
+
+.form-field input:focus,
+.form-field select:focus,
+.form-field textarea:focus {
+  outline: none;
+  border-color: var(--color-sidebar-active);
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
+}
+
+.form-hint {
+  font-size: 11px;
+  color: #64748b;
+  line-height: 1.45;
+}
+
+.form-readonly {
+  padding: 8px 10px;
+  background: #f1f5f9;
+  border-radius: 6px;
+  font-size: 13px;
+  color: #334155;
+  font-family: var(--font-mono);
+}
+
+.form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  padding-top: 8px;
+  border-top: 1px solid #e2e8f0;
+  margin-top: 4px;
+}
+
+.form-actions__spacer {
+  flex: 1;
+  min-width: 8px;
+}
+
+.form-callout {
+  font-size: 12px;
+  color: #475569;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin: 0;
+}
+
+/* 目標設定・データIO 用パネル */
+.settings-panel {
+  background: #fff;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  padding: 16px 18px;
+  margin-bottom: 16px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+}
+
+.settings-panel h3 {
+  margin: 0 0 12px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.io-dropzone {
+  border: 2px dashed #cbd5e1;
+  border-radius: 10px;
+  padding: 24px;
+  text-align: center;
+  background: #f8fafc;
+  color: #64748b;
+  font-size: 13px;
+  margin-top: 10px;
+}
+
+.io-dropzone strong {
+  color: #1e293b;
+}
+
+@media (max-width: 768px) {
+  .page-toolbar {
+    padding: 10px 12px;
+    padding-left: max(12px, env(safe-area-inset-left));
+    padding-right: max(12px, env(safe-area-inset-right));
+  }
+
+  .page-search {
+    flex: 1 1 100%;
+    min-width: 0;
+  }
+
+  .list-table-wrap {
+    padding: 12px;
+    padding-bottom: max(12px, env(safe-area-inset-bottom));
+  }
+
+  .list-table {
+    font-size: 11px;
+  }
+
+  .list-table thead th,
+  .list-table tbody td {
+    padding: 8px 8px;
+  }
+
+  .form-sheet-wrap {
+    padding: 12px;
+    padding-bottom: max(12px, env(safe-area-inset-bottom));
+  }
+
+  .form-sheet__body {
+    padding: 14px;
+  }
+}

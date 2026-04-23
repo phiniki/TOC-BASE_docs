@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>TOC-BASE | 全体ダッシュボード</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/dashboard.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" defer></script>
+  <script src="js/data-store.js" defer></script>
+  <script src="js/fiscal-period.js" defer></script>
+  <script src="js/nav.js" defer></script>
+  <script src="js/dashboard.js" defer></script>
+</head>
+<body data-nav="dashboard">
+
+<div class="app-shell">
+
+  <header class="app-header">
+    <div class="app-header__logo">
+      <div class="app-header__logo-mark">T</div>
+      <span class="app-header__system-name">TOC-BASE</span>
+    </div>
+
+    <p class="app-header__slogan">
+      &#x2605;&nbsp;最小限の労力で最大限の利益を得る！！全員絶対意識&nbsp;&#x2605;
+    </p>
+
+    <div class="app-header__user">
+      <div class="app-header__avatar">谷</div>
+      <span>谷口&nbsp;太郎</span>
+    </div>
+  </header>
+
+  <nav class="app-sidebar" aria-label="メインナビゲーション">
+    <span class="sidebar-section-label">メインメニュー</span>
+    <ul class="sidebar-nav">
+      <li class="sidebar-nav__item">
+        <a href="dashboard.html" class="sidebar-nav__link" data-nav="dashboard">
+          <svg class="sidebar-nav__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+            <rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>
+          </svg>
+          ダッシュボード
+        </a>
+      </li>
+      <li class="sidebar-nav__item">
+        <a href="index.html" class="sidebar-nav__link" data-nav="cases">
+          <svg class="sidebar-nav__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/>
+            <rect x="9" y="3" width="6" height="4" rx="1"/>
+            <line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="13" y2="16"/>
+          </svg>
+          案件シート
+        </a>
+      </li>
+      <li class="sidebar-nav__item">
+        <a href="complete-sheet.html" class="sidebar-nav__link" data-nav="complete-sheet">
+          <svg class="sidebar-nav__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M22 11.08V12a10 10 0 11-5.93-9.14"/>
+            <polyline points="22 4 12 14.01 9 11.01"/>
+          </svg>
+          完了シート
+        </a>
+      </li>
+      <li class="sidebar-nav__item">
+        <a href="case-purchases.html" class="sidebar-nav__link" data-nav="purchases">
+          <svg class="sidebar-nav__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/>
+            <line x1="3" y1="6" x2="21" y2="6"/>
+            <path d="M16 10a4 4 0 01-8 0"/>
+          </svg>
+          仕入登録
+        </a>
+      </li>
+    </ul>
+
+    <span class="sidebar-section-label">マスタ管理</span>
+    <ul class="sidebar-nav">
+      <li class="sidebar-nav__item">
+        <a href="master-clients.html" class="sidebar-nav__link" data-nav="clients">
+          <svg class="sidebar-nav__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
+          </svg>
+          取引先マスタ
+        </a>
+      </li>
+      <li class="sidebar-nav__item">
+        <a href="master-staff.html" class="sidebar-nav__link" data-nav="staff">
+          <svg class="sidebar-nav__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/>
+            <circle cx="9" cy="7" r="4"/>
+            <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/>
+          </svg>
+          担当者マスタ
+        </a>
+      </li>
+      <li class="sidebar-nav__item">
+        <a href="master-categories.html" class="sidebar-nav__link" data-nav="categories">
+          <svg class="sidebar-nav__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="9"/>
+            <line x1="12" y1="8" x2="12" y2="12"/>
+            <line x1="12" y1="16" x2="12.01" y2="16"/>
+          </svg>
+          カテゴリマスタ
+        </a>
+      </li>
+      <li class="sidebar-nav__item">
+        <a href="master-vendors.html" class="sidebar-nav__link" data-nav="vendors">
+          <svg class="sidebar-nav__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/>
+            <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
+            <line x1="12" y1="22.08" x2="12" y2="12"/>
+          </svg>
+          仕入先マスタ
+        </a>
+      </li>
+    </ul>
+
+    <span class="sidebar-section-label">設定・ツール</span>
+    <ul class="sidebar-nav">
+      <li class="sidebar-nav__item">
+        <a href="settings-goals.html" class="sidebar-nav__link" data-nav="goals">
+          <svg class="sidebar-nav__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>
+          </svg>
+          目標設定
+        </a>
+      </li>
+    </ul>
+
+    <div class="sidebar-footer">ver 1.0.0 &copy; TOC</div>
+  </nav>
+
+  <main class="app-main dashboard-scroll">
+
+    <div class="dash-period-bar">
+      <span class="dash-period-bar__title">会計期</span>
+      <div class="dash-period-bar__controls">
+        <label class="visually-hidden" for="fiscalKiSelect">会計期を選択</label>
+        <select id="fiscalKiSelect" class="dash-select dash-select--wide" aria-describedby="fyDisplay"></select>
+        <span id="fyDisplay" class="dash-fy-badge" role="status">—</span>
+      </div>
+    </div>
+
+    <div class="page-header">
+      <div>
+        <h1 class="page-header__title">全体ダッシュボード</h1>
+        <p class="page-header__subtitle" id="kpiPeriodCaption">—</p>
+      </div>
+    </div>
+
+    <div class="dashboard-inner">
+
+      <!-- ========== Section 1 KPI ========== -->
+      <section class="dash-section" aria-labelledby="sec-kpi-title">
+        <div class="dash-section__head">
+          <div class="dash-section__icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M12 20V10M18 20V4M6 20v-4"/></svg>
+          </div>
+          <div class="dash-section__titles">
+            <h2 id="sec-kpi-title">会社全体の予想・実績</h2>
+            <p>計上月（案件の売上計上月）で集計。9月始まりの会計期に合わせています。</p>
+          </div>
+        </div>
+        <div class="dash-section__body">
+          <div class="dash-chart-wrap dash-chart-wrap--tall">
+            <h4>月次推移</h4>
+            <div class="dash-chart-canvas">
+              <canvas id="companyMonthlyChart" aria-label="会社全体の月次グラフ"></canvas>
+            </div>
+          </div>
+
+          <div class="dash-mini-table-wrap dash-table-block">
+            <h4>会社全体の集計表</h4>
+            <p class="dash-hint">予想・実績の各指標を、月ごと・上期・下期・年間で表示します（粗利率は％）。</p>
+            <div class="matrix-wrap matrix-wrap--scroll">
+              <table class="dash-table dash-table--company-matrix">
+                <thead id="companyFiscalHead"></thead>
+                <tbody id="companyFiscalBody"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="goal-progress-block goal-progress-block--standalone">
+            <div class="goal-progress-block__head">
+              <h4>半期売上目標の達成状況</h4>
+              <a href="settings-goals.html" class="btn btn--ghost btn--sm">目標を設定</a>
+            </div>
+            <div class="goal-summary-row" id="goalYearSummary">—</div>
+            <div class="goal-bar-row">
+              <div class="goal-bar-row__top">
+                <span id="progH1Label">上期目標 —</span>
+                <span id="progH1Val">—</span>
+              </div>
+              <div class="goal-bar"><div class="goal-bar__fill" id="progH1Fill" style="width:0%"></div></div>
+            </div>
+            <div class="goal-bar-row">
+              <div class="goal-bar-row__top">
+                <span id="progH2Label">下期目標 —</span>
+                <span id="progH2Val">—</span>
+              </div>
+              <div class="goal-bar"><div class="goal-bar__fill" id="progH2Fill" style="width:0%"></div></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========== Section 2 Staff ========== -->
+      <section class="dash-section" aria-labelledby="sec-staff-title">
+        <div class="dash-section__head">
+          <div class="dash-section__icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><circle cx="9" cy="7" r="4"/><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
+          </div>
+          <div class="dash-section__titles">
+            <h2 id="sec-staff-title">担当者別パフォーマンス</h2>
+          </div>
+        </div>
+        <div class="dash-section__body">
+          <div class="dash-split">
+            <div class="dash-staff-panel">
+              <h4>営業担当別（表示指標を切り替え）</h4>
+              <div class="dash-metric-tabs" role="tablist" aria-label="営業担当表の指標">
+                <button type="button" class="dash-metric-tab is-active" role="tab" aria-selected="true" data-metric="sales">実際売上</button>
+                <button type="button" class="dash-metric-tab" role="tab" aria-selected="false" data-metric="count">件数</button>
+                <button type="button" class="dash-metric-tab" role="tab" aria-selected="false" data-metric="profit">実際粗利</button>
+                <button type="button" class="dash-metric-tab" role="tab" aria-selected="false" data-metric="margin">粗利率</button>
+              </div>
+              <div class="matrix-wrap matrix-wrap--scroll">
+                <table class="dash-table dash-table--staff-matrix">
+                  <thead id="salesRepTableHead"></thead>
+                  <tbody id="salesRepTableBody"></tbody>
+                </table>
+              </div>
+            </div>
+            <div class="dash-mini-table-wrap dash-staff-panel">
+              <h4>デザイン担当別（件数）</h4>
+              <p class="dash-hint">案件を担当者で按分してカウント（複数担当は 1/n）。</p>
+              <div class="matrix-wrap matrix-wrap--scroll">
+                <table class="dash-table dash-table--staff-matrix">
+                  <thead id="designRepTableHead"></thead>
+                  <tbody id="designRepTableBody"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========== Section 3 Segment ========== -->
+      <section class="dash-section" aria-labelledby="sec-seg-title">
+        <div class="dash-section__head">
+          <div class="dash-section__icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+          </div>
+          <div class="dash-section__titles">
+            <h2 id="sec-seg-title">セグメント別クロス集計</h2>
+          </div>
+        </div>
+        <div class="dash-section__body">
+          <div class="segment-tabs" role="tablist">
+            <button type="button" class="is-active" id="segmentTabCategory" role="tab" aria-selected="true">カテゴリ別</button>
+            <button type="button" id="segmentTabClient" role="tab" aria-selected="false">取引先別</button>
+          </div>
+          <div id="segmentPanelCategory" class="segment-panel" role="tabpanel">
+            <div class="matrix-wrap">
+              <table class="matrix-table">
+                <thead>
+                  <tr>
+                    <th scope="col">カテゴリ</th>
+                    <th scope="col" class="js-mcol" data-month-idx="0">9月</th>
+                    <th scope="col" class="js-mcol" data-month-idx="1">10月</th>
+                    <th scope="col" class="js-mcol" data-month-idx="2">11月</th>
+                    <th scope="col" class="js-mcol" data-month-idx="3">12月</th>
+                    <th scope="col" class="js-mcol" data-month-idx="4">1月</th>
+                    <th scope="col" class="js-mcol" data-month-idx="5">2月</th>
+                    <th scope="col">上期計</th>
+                    <th scope="col" class="js-mcol" data-month-idx="6">3月</th>
+                    <th scope="col" class="js-mcol" data-month-idx="7">4月</th>
+                    <th scope="col" class="js-mcol" data-month-idx="8">5月</th>
+                    <th scope="col" class="js-mcol" data-month-idx="9">6月</th>
+                    <th scope="col" class="js-mcol" data-month-idx="10">7月</th>
+                    <th scope="col" class="js-mcol" data-month-idx="11">8月</th>
+                    <th scope="col">下期計</th>
+                    <th scope="col">年間計</th>
+                  </tr>
+                </thead>
+                <tbody id="matrixCategoryBody"></tbody>
+              </table>
+            </div>
+          </div>
+          <div id="segmentPanelClient" class="segment-panel" role="tabpanel" hidden>
+            <div class="matrix-wrap">
+              <table class="matrix-table">
+                <thead>
+                  <tr>
+                    <th scope="col">取引先</th>
+                    <th scope="col" class="js-mcol" data-month-idx="0">9月</th>
+                    <th scope="col" class="js-mcol" data-month-idx="1">10月</th>
+                    <th scope="col" class="js-mcol" data-month-idx="2">11月</th>
+                    <th scope="col" class="js-mcol" data-month-idx="3">12月</th>
+                    <th scope="col" class="js-mcol" data-month-idx="4">1月</th>
+                    <th scope="col" class="js-mcol" data-month-idx="5">2月</th>
+                    <th scope="col">上期計</th>
+                    <th scope="col" class="js-mcol" data-month-idx="6">3月</th>
+                    <th scope="col" class="js-mcol" data-month-idx="7">4月</th>
+                    <th scope="col" class="js-mcol" data-month-idx="8">5月</th>
+                    <th scope="col" class="js-mcol" data-month-idx="9">6月</th>
+                    <th scope="col" class="js-mcol" data-month-idx="10">7月</th>
+                    <th scope="col" class="js-mcol" data-month-idx="11">8月</th>
+                    <th scope="col">下期計</th>
+                    <th scope="col">年間計</th>
+                  </tr>
+                </thead>
+                <tbody id="matrixClientBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========== Section 4 Procurement ========== -->
+      <section class="dash-section" aria-labelledby="sec-proc-title">
+        <div class="dash-section__head">
+          <div class="dash-section__icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><path d="M3.27 6.96L12 12.01l8.73-5.05M12 22.08V12"/></svg>
+          </div>
+          <div class="dash-section__titles">
+            <h2 id="sec-proc-title">仕入・原価・仕掛金分析</h2>
+          </div>
+        </div>
+        <div class="dash-section__body">
+          <div class="procure-matrix-wrap">
+            <h3 style="font-size:13px;font-weight:700;color:#9a3412;margin-bottom:10px">仕入実績マトリクス（仕入請求月 × 売上計上月）</h3>
+            <div class="procure-toolbar">
+              <label for="vendorFilter">仕入先マスタ</label>
+              <select id="vendorFilter" class="dash-select">
+                <option>すべて</option>
+                <option>建材商事株式会社</option>
+                <option>電設プロサプライ</option>
+                <option>内装ライン物流</option>
+                <option>広告メディアWorks</option>
+              </select>
+            </div>
+            <div class="matrix-wrap">
+              <table class="matrix-table">
+                <thead>
+                  <tr>
+                    <th scope="col">仕入請求月 ＼ 売上計上月</th>
+                    <th scope="col">1月</th>
+                    <th scope="col">2月</th>
+                    <th scope="col">3月</th>
+                    <th scope="col">4月</th>
+                    <th scope="col">5月</th>
+                    <th scope="col">6月</th>
+                    <th scope="col">7月</th>
+                    <th scope="col">8月</th>
+                    <th scope="col">9月</th>
+                    <th scope="col">10月</th>
+                    <th scope="col">11月</th>
+                    <th scope="col">12月</th>
+                  </tr>
+                </thead>
+                <tbody id="purchaseMatrixBody"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="wip-matrix-wrap">
+            <h3 style="font-size:13px;font-weight:700;color:#1e40af;margin-bottom:10px">仕掛金（未回収原価）集計</h3>
+            <div class="matrix-wrap">
+              <table class="matrix-table">
+                <thead>
+                  <tr>
+                    <th scope="col">仕入の請求月（会計月）</th>
+                    <th scope="col">仕掛金額（合計）</th>
+                  </tr>
+                </thead>
+                <tbody id="wipMatrixBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+</div>
+
+</body>
+</html>

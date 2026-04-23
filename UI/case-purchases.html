@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>TOC-BASE | 仕入登録</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/pages.css" />
+  <script src="js/data-store.js" defer></script>
+  <script src="js/nav.js" defer></script>
+  <script src="js/case-purchases.js" defer></script>
+</head>
+<body data-nav="purchases">
+
+<div class="app-shell">
+  <header class="app-header">
+    <div class="app-header__logo">
+      <div class="app-header__logo-mark">T</div>
+      <span class="app-header__system-name">TOC-BASE</span>
+    </div>
+    <p class="app-header__slogan">
+      &#x2605;&nbsp;最小限の労力で最大限の利益を得る！！全員絶対意識&nbsp;&#x2605;
+    </p>
+    <div class="app-header__user">
+      <div class="app-header__avatar">谷</div>
+      <span>谷口&nbsp;太郎</span>
+    </div>
+  </header>
+
+  <nav class="app-sidebar" aria-label="メインナビゲーション">
+    <span class="sidebar-section-label">メインメニュー</span>
+    <ul class="sidebar-nav">
+      <li class="sidebar-nav__item">
+        <a href="dashboard.html" class="sidebar-nav__link" data-nav="dashboard">
+          <svg class="sidebar-nav__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+            <rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>
+          </svg>
+          ダッシュボード
+        </a>
+      </li>
+      <li class="sidebar-nav__item">
+        <a href="index.html" class="sidebar-nav__link" data-nav="cases">
+          <svg class="sidebar-nav__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/>
+            <rect x="9" y="3" width="6" height="4" rx="1"/>
+            <line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="13" y2="16"/>
+          </svg>
+          案件シート
+        </a>
+      </li>
+      <li class="sidebar-nav__item">
+        <a href="complete-sheet.html" class="sidebar-nav__link" data-nav="complete-sheet">
+          <svg class="sidebar-nav__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M22 11.08V12a10 10 0 11-5.93-9.14"/>
+            <polyline points="22 4 12 14.01 9 11.01"/>
+          </svg>
+          完了シート
+        </a>
+      </li>
+      <li class="sidebar-nav__item">
+        <a href="case-purchases.html" class="sidebar-nav__link" data-nav="purchases">
+          <svg class="sidebar-nav__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/>
+            <line x1="3" y1="6" x2="21" y2="6"/>
+            <path d="M16 10a4 4 0 01-8 0"/>
+          </svg>
+          仕入登録
+        </a>
+      </li>
+    </ul>
+    <span class="sidebar-section-label">マスタ管理</span>
+    <ul class="sidebar-nav">
+      <li class="sidebar-nav__item">
+        <a href="master-clients.html" class="sidebar-nav__link" data-nav="clients">
+          <svg class="sidebar-nav__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
+          </svg>
+          取引先マスタ
+        </a>
+      </li>
+      <li class="sidebar-nav__item">
+        <a href="master-staff.html" class="sidebar-nav__link" data-nav="staff">
+          <svg class="sidebar-nav__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/>
+            <circle cx="9" cy="7" r="4"/>
+            <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/>
+          </svg>
+          担当者マスタ
+        </a>
+      </li>
+      <li class="sidebar-nav__item">
+        <a href="master-categories.html" class="sidebar-nav__link" data-nav="categories">
+          <svg class="sidebar-nav__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="9"/>
+            <line x1="12" y1="8" x2="12" y2="12"/>
+            <line x1="12" y1="16" x2="12.01" y2="16"/>
+          </svg>
+          カテゴリマスタ
+        </a>
+      </li>
+      <li class="sidebar-nav__item">
+        <a href="master-vendors.html" class="sidebar-nav__link" data-nav="vendors">
+          <svg class="sidebar-nav__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/>
+            <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
+            <line x1="12" y1="22.08" x2="12" y2="12"/>
+          </svg>
+          仕入先マスタ
+        </a>
+      </li>
+    </ul>    <span class="sidebar-section-label">設定・ツール</span>
+    <ul class="sidebar-nav">
+      <li class="sidebar-nav__item">
+        <a href="settings-goals.html" class="sidebar-nav__link" data-nav="goals">
+          <svg class="sidebar-nav__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>
+          </svg>
+          目標設定
+        </a>
+      </li>
+    </ul>
+    <div class="sidebar-footer">ver 1.0.0 &copy; TOC</div>
+  </nav>
+
+  <main class="app-main page-scroll page-stack">
+    <header class="purchase-page-header">
+      <h1 class="purchase-page-header__title">仕入登録</h1>
+    </header>
+
+    <div class="purchase-mode-tabs" role="tablist" aria-label="登録モード">
+      <button type="button" class="purchase-mode-tabs__btn is-active" role="tab" aria-selected="true" data-mode="case" id="tabCase">案件ベース</button>
+      <button type="button" class="purchase-mode-tabs__btn" role="tab" aria-selected="false" data-mode="invoice" id="tabInvoice">請求書ベース</button>
+      <button type="button" class="purchase-mode-tabs__btn" role="tab" aria-selected="false" data-mode="bulk" id="tabBulk">一括ベース</button>
+    </div>
+
+    <section id="panelCase" class="purchase-panel" role="tabpanel" aria-labelledby="tabCase">
+      <div class="purchase-case-panel">
+        <input type="hidden" id="purchaseCaseId" value="" />
+        <div class="purchase-case-grid">
+          <label for="caseBaseSelect">案件</label>
+          <select id="caseBaseSelect" class="toolbar__select" style="max-width:100%;min-width:280px"></select>
+          <span class="purchase-case-grid__k">見積No.</span>
+          <span id="caseBaseEstimate" class="purchase-case-grid__v">—</span>
+          <span class="purchase-case-grid__k">取引先</span>
+          <span id="caseClientName" class="purchase-case-grid__v">—</span>
+          <span class="purchase-case-grid__k">物件名</span>
+          <span id="caseBuildingName" class="purchase-case-grid__v">—</span>
+        </div>
+      </div>
+      <div class="page-toolbar purchase-toolbar">
+        <div class="purchase-toolbar__start">
+          <button type="button" class="btn btn--ghost btn--sm" id="btnAddCaseRow">＋ 行を追加</button>
+          <button type="button" class="btn btn--primary btn--sm" id="btnSaveCaseToolbar">保存</button>
+        </div>
+        <span id="purchaseTotalsCase" class="purchase-toolbar__totals">—</span>
+      </div>
+      <div class="list-table-wrap">
+        <table class="list-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>仕入先</th>
+              <th>請求日</th>
+              <th class="num">仕入金額</th>
+              <th class="num">仕入金額（税込）</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody id="purchaseTableBodyCase"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="panelInvoice" class="purchase-panel purchase-panel--invoice" role="tabpanel" aria-labelledby="tabInvoice" hidden>
+      <div class="purchase-invoice-split purchase-invoice-split--top">
+        <h2 class="purchase-section-title" id="invoiceListHeading">請求書一覧</h2>
+        <p class="purchase-section-lead">登録済みの仕入を、仕入先・請求日（請求書の日付）ごとに集計しています。<strong>行をクリック</strong>すると、下の「請求書の内容」に取り込まれます。</p>
+        <div class="list-table-wrap list-table-wrap--invoice-keys">
+          <table class="list-table list-table--compact" aria-labelledby="invoiceListHeading">
+            <thead>
+              <tr>
+                <th>仕入先</th>
+                <th>請求日</th>
+                <th class="num">行数</th>
+                <th class="num">仕入金額計（税抜）</th>
+              </tr>
+            </thead>
+            <tbody id="invoiceKeyTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="purchase-invoice-split purchase-invoice-split--bottom">
+        <h2 class="purchase-section-title" id="invoiceDetailHeading">請求書の内容・明細</h2>
+        <p class="purchase-section-lead">一覧の行をクリックするか、仕入先と請求日の両方を指定すると、そのキーに紐づく明細を表示します。「新規作成」で別の請求書として入力を始められます。</p>
+
+        <div class="purchase-invoice-editor" role="region" aria-labelledby="invoiceDetailHeading">
+          <div class="purchase-invoice-editor__label">仕入先・請求日（この請求書のキー）</div>
+          <div class="purchase-invoice-toolbar purchase-invoice-toolbar--editor">
+            <div class="purchase-invoice-toolbar__field purchase-invoice-toolbar__field--grow">
+              <label for="invVendor">仕入先</label>
+              <select id="invVendor" class="toolbar__select purchase-invoice-select" aria-describedby="invVendorHint"></select>
+              <span id="invVendorHint" class="purchase-field-hint">マスタの仕入先名</span>
+            </div>
+            <div class="purchase-invoice-toolbar__field">
+              <label for="invDate">請求日（請求書の日付）</label>
+              <input id="invDate" type="date" class="toolbar__search-input purchase-invoice-date" aria-describedby="invDateHint" />
+              <span id="invDateHint" class="purchase-field-hint">カレンダーで選択</span>
+            </div>
+            <div class="purchase-invoice-toolbar__actions">
+              <button type="button" class="btn btn--ghost btn--sm" id="btnNewInvoice">新規作成</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="page-toolbar purchase-toolbar purchase-toolbar--invoice-detail">
+          <div class="purchase-toolbar__start">
+            <button type="button" class="btn btn--ghost btn--sm" id="btnAddInvoiceRow">＋ 明細行を追加</button>
+            <button type="button" class="btn btn--primary btn--sm" id="btnSaveInvoiceToolbar">保存</button>
+          </div>
+          <span id="purchaseTotalsInvoice" class="purchase-toolbar__totals">—</span>
+        </div>
+        <div class="list-table-wrap list-table-wrap--invoice-detail">
+          <table class="list-table" aria-label="請求書明細">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>見積No.（案件）</th>
+                <th class="num">仕入金額</th>
+                <th class="num">仕入金額（税込）</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody id="invoiceDetailBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section id="panelBulk" class="purchase-panel" role="tabpanel" aria-labelledby="tabBulk" hidden>
+      <div class="page-toolbar purchase-toolbar">
+        <div class="purchase-toolbar__start">
+          <button type="button" class="btn btn--ghost btn--sm" id="btnAddBulkRow">＋ 行を追加</button>
+          <button type="button" class="btn btn--primary btn--sm" id="btnSaveBulkToolbar">保存</button>
+        </div>
+        <span id="purchaseTotalsBulk" class="purchase-toolbar__totals">—</span>
+      </div>
+      <div class="list-table-wrap">
+        <table class="list-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>見積No.</th>
+              <th>仕入先</th>
+              <th>請求日</th>
+              <th class="num">仕入金額</th>
+              <th class="num">仕入金額（税込）</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody id="bulkTableBody"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+</div>
+</body>
+</html>
