@@ -1,6 +1,7 @@
 /**
  * 案件登録・編集フォーム — localStorage（TocDataStore）連携
  * フォームはコア項目のみ。それ以外は一覧表で編集。
+ * 予想売上（税抜）の表示は TocDataStore.computeCaseForecastSalesEx と同一（媒体案件は撤去費・次年度以降の更新費を自動控除）。
  */
 function parseDigits(str) {
   const n = parseInt(String(str ?? '').replace(/[^\d]/g, ''), 10);
@@ -110,12 +111,12 @@ function loadCaseIntoForm(c) {
   fillStaffMultiSelects();
   applyMultiSelectionFromString(document.getElementById('salesStaff'), c.salesStaff);
   applyMultiSelectionFromString(document.getElementById('designStaff'), c.designStaff);
-  set('fForecastSales', c.forecastSales != null ? String(c.forecastSales) : '');
+  const estEx = Number(c.estimateTotalEx ?? c.forecastSales);
+  set('fEstimateTotalEx', Number.isFinite(estEx) ? String(estEx) : '');
   set('fForecastCost', c.forecastCost != null ? String(c.forecastCost) : '');
   set('jorei', c.jorei || '◯');
-  set('billMonth', c.billMonth || '');
-  set('startDay', c.startDate && c.startDate !== '—' ? c.startDate : '');
   set('memo', c.contentMemo || '');
+  set('billMonth', c.billMonth || '');
   set('cat', c.category);
 }
 
@@ -129,11 +130,11 @@ function readFormPayload(prev) {
     kubun: g('kubun')?.value || '',
     salesStaff: selectedNamesJoined(g('salesStaff')),
     designStaff: selectedNamesJoined(g('designStaff')),
-    forecastSales: parseDigits(g('fForecastSales')?.value),
+    estimateTotalEx: parseDigits(g('fEstimateTotalEx')?.value),
+    forecastSales: parseDigits(g('fEstimateTotalEx')?.value),
     forecastCost: parseDigits(g('fForecastCost')?.value),
     jorei: g('jorei')?.value || '◯',
     billMonth: g('billMonth')?.value || '',
-    startDate: g('startDay')?.value || '',
     contentMemo: g('memo')?.value.trim() || '',
     category: g('cat')?.value || '',
     contentBadge: prev?.contentBadge || 'blue',
@@ -170,22 +171,47 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('estNo').value = '';
   }
 
-  const fs = document.getElementById('fForecastSales');
+  const estInp = document.getElementById('fEstimateTotalEx');
   const fc = document.getElementById('fForecastCost');
   const preview = document.getElementById('forecastPreview');
+  const salesMirror = document.getElementById('fForecastSalesMirror');
 
-  function updForecast() {
-    if (!preview) return;
-    const a = parseDigits(fs && fs.value);
-    const b = parseDigits(fc && fc.value);
-    const pr = a - b;
-    const r = a ? ((pr / a) * 100).toFixed(1) : '—';
-    preview.textContent =
-      '予想粗利 ¥' + pr.toLocaleString() + ' ／ 予想粗利率 ' + r + '%（入力値から即時反映）';
+  /** 入力中の見積金額で予想売上を試算するための一時オブジェクト（保存済み caseId で媒体を参照） */
+  function draftCaseForForecastSales() {
+    const prev = editingCaseId ? TocDataStore.getCase(editingCaseId) || {} : {};
+    const est = parseDigits(estInp && estInp.value);
+    const kubunEl = document.getElementById('kubun');
+    const kubun = kubunEl?.value ?? prev.kubun ?? '';
+    return {
+      ...prev,
+      caseId: editingCaseId || prev.caseId || '',
+      estimateTotalEx: est,
+      forecastSales: est,
+      kubun,
+    };
   }
 
-  if (fs) fs.addEventListener('input', updForecast);
+  function updForecast() {
+    const draft = draftCaseForForecastSales();
+    const forecastSales = TocDataStore.computeCaseForecastSalesEx(draft);
+    if (salesMirror) {
+      salesMirror.textContent = '¥' + Math.round(forecastSales).toLocaleString('ja-JP');
+    }
+    if (!preview) return;
+    const cost = parseDigits(fc && fc.value);
+    const pr = forecastSales - cost;
+    const r = forecastSales !== 0 ? ((pr / forecastSales) * 100).toFixed(1) : '—';
+    preview.textContent =
+      '予想粗利 ¥' +
+      Math.round(pr).toLocaleString('ja-JP') +
+      ' ／ 予想粗利率 ' +
+      r +
+      '%（媒体案件は撤去費・次年度以降の更新費を自動控除。予想原価は入力値）';
+  }
+
+  if (estInp) estInp.addEventListener('input', updForecast);
   if (fc) fc.addEventListener('input', updForecast);
+  document.getElementById('kubun')?.addEventListener('change', updForecast);
   updForecast();
 
   const btnSave = document.getElementById('btnSaveCase');

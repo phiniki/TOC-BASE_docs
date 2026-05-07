@@ -289,7 +289,7 @@
         $('ccode').value = c.code;
         $('cname').value = c.name;
         $('cst').value = c.status;
-        $('ccolor').value = c.color || '#3b82f6';
+        $('ccolor').value = c.color || '#289B5C';
         $('cdesc').value = c.desc || '';
       }
     } else {

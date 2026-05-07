@@ -6,13 +6,53 @@ const SELECT_OPTIONS = {
   'select-kubun': ['システム', 'ネット', '工事', '申請', '納品', '媒体'],
   'select-jorei': ['◯', '△', '×'],
   'select-status': ['見積提出済', '受注', '施行中', '施工完了', '失注'],
-  'select-hatchu': ['未提出', '初回提出', '提出済', '印刷済'],
-  'select-paid': ['済', '未'],
   'select-category': ['全体', 'Joshin', 'コラボ', '媒体', 'ネット', 'その他材料', '立替'],
 };
 
+/** 一覧では区分を編集不可のため、ピル表示用クラス（案件フォームで変更） */
+const KUBUN_PILL_CLASS = {
+  システム: 'kbn-system',
+  ネット: 'kbn-net',
+  工事: 'kbn-kouji',
+  申請: 'kbn-shinsei',
+  納品: 'kbn-nohin',
+  媒体: 'kbn-baitai',
+};
+
+function kubunPillHtml(kubun) {
+  const k = String(kubun ?? '').trim();
+  const cls = KUBUN_PILL_CLASS[k] || 'kbn-new';
+  const label = k || '—';
+  return `<span class="kbn-pill ${cls}" title="区分は「編集」から変更できます">${escapeHtml(label)}</span>`;
+}
+
 /** 案件シート初期表示列（#〜編集まで全列） */
-const CASE_SHEET_VISIBLE_COLS = Array.from({ length: 23 }, (_, i) => i);
+const CASE_SHEET_VISIBLE_COLS = Array.from({ length: 20 }, (_, i) => i);
+
+const CASE_SHEET_SHOW_INVOICED_KEY = 'toc-case-sheet-show-invoiced';
+
+function getShowInvoicedOnCaseSheet() {
+  try {
+    return sessionStorage.getItem(CASE_SHEET_SHOW_INVOICED_KEY) === '1';
+  } catch (_) {
+    return false;
+  }
+}
+
+function setShowInvoicedOnCaseSheet(v) {
+  try {
+    if (v) sessionStorage.setItem(CASE_SHEET_SHOW_INVOICED_KEY, '1');
+    else sessionStorage.removeItem(CASE_SHEET_SHOW_INVOICED_KEY);
+  } catch (_) {}
+}
+
+function syncShowInvoicedButtonUI() {
+  const btn = document.getElementById('showInvoicedCasesBtn');
+  if (!btn) return;
+  const on = getShowInvoicedOnCaseSheet();
+  btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+  btn.classList.toggle('is-pressed', on);
+}
 
 function escapeHtml(s) {
   return String(s ?? '')
@@ -22,7 +62,7 @@ function escapeHtml(s) {
     .replace(/"/g, '&quot;');
 }
 
-/** 請求日・入金日用（input[type=date] の value） */
+/** 日付フィールド用（input[type=date] の value） */
 function toDateInputValue(raw) {
   if (raw == null || raw === '—' || String(raw).trim() === '') return '';
   const s = String(raw).trim().slice(0, 10);
@@ -60,20 +100,30 @@ function buildCaseRow(c, rowNum) {
   tr.dataset.estimateNo = estRaw;
   const estDisp = estRaw ? escapeHtml(estRaw) : '—';
   const memoBody = escapeHtml(c.contentMemo || '');
-  const payVal = toDateInputValue(c.payDate);
-  const startVal = toDateInputValue(c.startDate);
   const billM = monthInputValue(c.billMonth);
   const cid = encodeURIComponent(c.caseId || '');
+  const invDone = String(c.invoiceDone ?? '').trim() === '済';
+  const invD = toDateInputValue(c.invoiceDate);
+  const invoiceColInner = invDone
+    ? `<div class="cell-invoice-done"><span class="badge badge--green">請求済</span>${
+        invD ? `<span class="cell-invoice-done__date">${escapeHtml(invD)}</span>` : ''
+      }</div>`
+    : `<button type="button" class="link-action link-action--btn js-invoice-done">請求済みにする</button>`;
+  const mediaInner = String(c.kubun || '').trim() === '媒体'
+    ? `<a class="link-action link-action--btn" href="media-mgmt.html?caseId=${cid}">媒体管理</a>`
+    : '—';
 
   tr.innerHTML = `
     <td class="col-sticky col-sticky-1 col-rownum">${rowNum}</td>
     <td class="col-sticky col-sticky-2 cell-estimate-no">${estDisp}</td>
     <td class="col-sticky col-sticky-3">${escapeHtml(c.client)}</td>
     <td class="col-sticky col-sticky-4">${escapeHtml(c.building)}</td>
-    <td data-editable data-edit="select-kubun" data-initial-value="${escapeHtml(c.kubun)}"></td>
+    <td class="cell-kubun-readonly">${kubunPillHtml(c.kubun)}</td>
     <td data-sales>${escapeHtml(c.salesStaff)}</td>
     <td data-design>${escapeHtml(c.designStaff)}</td>
-    <td class="cell-num" data-field="forecast_sales">${formatMoney(c.forecastSales)}</td>
+    <td class="cell-num" data-field="forecast_sales">${formatMoney(
+      window.TocDataStore ? TocDataStore.computeCaseForecastSalesEx(c) : Number(c.forecastSales) || 0
+    )}</td>
     <td class="cell-num" data-field="forecast_cost">${formatMoney(c.forecastCost)}</td>
     <td class="cell-num" data-field="forecast_profit">¥0</td>
     <td class="cell-rate" data-field="forecast_rate">—</td>
@@ -81,23 +131,22 @@ function buildCaseRow(c, rowNum) {
     <td class="cell-rate" data-field="utilization">—</td>
     <td data-editable data-edit="select-jorei" data-initial-value="${escapeHtml(c.jorei)}"></td>
     <td class="cell-date cell-date-input"><input type="month" class="cell-native-month" value="${billM}" aria-label="請求予定月" /></td>
-    <td class="cell-date cell-date-input"><input type="date" class="cell-native-date" value="${startVal}" aria-label="着工日" /></td>
     <td class="cell-content-memo"><textarea class="cell-native-text" rows="3" aria-label="内容状況（進捗メモ）">${memoBody}</textarea></td>
     <td data-editable data-edit="select-status" data-initial-value="${escapeHtml(c.status)}"></td>
-    <td data-editable data-edit="select-hatchu" data-initial-value="${escapeHtml(c.hatchu)}"></td>
-    <td class="cell-actions">
-      <button type="button" class="link-action link-action--btn js-invoice-done">請求済みにする</button>
-    </td>
-    <td data-editable data-edit="select-paid" data-initial-value="${escapeHtml(c.paidDone)}"></td>
-    <td class="cell-date cell-date-input"><input type="date" class="cell-native-date" value="${payVal}" aria-label="入金日" /></td>
+    <td class="cell-actions">${invoiceColInner}</td>
+    <td class="cell-actions">${mediaInner}</td>
     <td class="cell-actions"><a class="link-action" href="case-form.html?id=${cid}">編集</a></td>
   `;
   return tr;
 }
 
 function cellSelectValue(cells, i) {
-  const sel = cells[i].querySelector('.cell-native-select');
-  return sel ? sel.value : cells[i].textContent.trim();
+  const td = cells[i];
+  const sel = td.querySelector('.cell-native-select');
+  if (sel) return sel.value;
+  const pill = td.querySelector('.kbn-pill');
+  if (pill) return pill.textContent.trim();
+  return td.textContent.trim();
 }
 
 function cellMoneyOrZero(cells, i) {
@@ -111,13 +160,6 @@ function readContentMemoFromCell(td) {
   return td.textContent.trim();
 }
 
-function cellNativeDateValue(td) {
-  const inp = td.querySelector('input.cell-native-date');
-  if (inp) return inp.value ? inp.value : '—';
-  const t = td.textContent.trim();
-  return t || '—';
-}
-
 function cellNativeMonthValue(td) {
   const inp = td.querySelector('input.cell-native-month');
   if (inp) return inp.value ? inp.value.trim() : '';
@@ -126,11 +168,9 @@ function cellNativeMonthValue(td) {
 
 function readCaseFromRow(tr) {
   const cells = tr.cells;
-  const contentMemo = readContentMemoFromCell(cells[16]);
+  const contentMemo = readContentMemoFromCell(cells[15]);
   let est = cells[1].textContent.trim();
   if (est === '—') est = '';
-  let startDate = cellNativeDateValue(cells[15]);
-  if (startDate === '—') startDate = '';
   return {
     caseId: tr.dataset.caseId,
     estimateNo: est,
@@ -144,17 +184,13 @@ function readCaseFromRow(tr) {
     actualCost: cellMoneyOrZero(cells, 11),
     jorei: cellSelectValue(cells, 13),
     billMonth: cellNativeMonthValue(cells[14]),
-    startDate,
     contentMemo,
-    status: cellSelectValue(cells, 17),
-    hatchu: cellSelectValue(cells, 18),
-    paidDone: cellSelectValue(cells, 20),
-    payDate: cellNativeDateValue(cells[21]),
+    status: cellSelectValue(cells, 16),
   };
 }
 
 function persistCaseRow(tr) {
-  if (!window.TocDataStore || !tr || !tr.cells || tr.cells.length < 23) return;
+  if (!window.TocDataStore || !tr || !tr.cells || tr.cells.length < 20) return;
   const caseId = tr.dataset.caseId;
   if (!caseId) return;
   const prev = TocDataStore.getCase(caseId);
@@ -163,14 +199,14 @@ function persistCaseRow(tr) {
   const patch = {
     contentMemo: data.contentMemo,
     status: data.status,
-    hatchu: data.hatchu,
-    paidDone: data.paidDone,
-    payDate: data.payDate,
+    invoiceDone: prev.invoiceDone,
+    invoiceDate: prev.invoiceDate,
+    paidDone: prev.paidDone,
+    payDate: prev.payDate,
     actualCost: data.actualCost,
-    kubun: data.kubun,
+    kubun: prev.kubun,
     jorei: data.jorei,
     billMonth: data.billMonth,
-    startDate: data.startDate,
   };
   TocDataStore.upsertCase({ ...prev, ...patch });
   updateCaseActionLinks(tr, caseId);
@@ -182,16 +218,25 @@ function hydrateCasesTable() {
   TocDataStore.ensureInit();
   syncCategoryOptionsFromStore();
   const allCases = TocDataStore.getState().cases;
-  const cases = allCases.filter(c => c.invoiceDone !== '済');
+  const showInvoiced = getShowInvoicedOnCaseSheet();
+  const filtered = showInvoiced ? [...allCases] : allCases.filter(c => c.invoiceDone !== '済');
+  const cases = TocDataStore.sortCasesByCreatedDesc(filtered);
   tbody.innerHTML = '';
   cases.forEach((c, i) => tbody.appendChild(buildCaseRow(c, i + 1)));
   const foot = document.getElementById('tableFooterCount');
   if (foot) {
-    const invoiced = allCases.length - cases.length;
-    foot.textContent =
-      invoiced > 0
-        ? `未請求 ${cases.length} 件を表示（請求済み ${invoiced} 件は一覧に含みません）`
-        : `未請求 ${cases.length} 件を表示`;
+    const invoicedCount = allCases.filter(c => c.invoiceDone === '済').length;
+    if (showInvoiced) {
+      foot.textContent =
+        invoicedCount > 0
+          ? `全 ${cases.length} 件を表示（請求済み ${invoicedCount} 件を含む）`
+          : `全 ${cases.length} 件を表示`;
+    } else {
+      foot.textContent =
+        invoicedCount > 0
+          ? `未請求 ${cases.length} 件を表示（請求済み ${invoicedCount} 件は一覧に含みません）`
+          : `未請求 ${cases.length} 件を表示`;
+    }
   }
   assignColumnIndices();
   applyCaseSheetColumnPreset();
@@ -295,6 +340,7 @@ function initContentMemoInputs(root = document) {
 
 document.addEventListener('DOMContentLoaded', () => {
   if (document.getElementById('casesTableBody') && window.TocDataStore) {
+    syncShowInvoicedButtonUI();
     hydrateCasesTable();
   } else {
     syncFilterOptionsFromStore();
@@ -307,6 +353,13 @@ document.addEventListener('DOMContentLoaded', () => {
   initColumnSettings();
   initCaseSheetColumns();
   initInvoiceDoneDialog();
+
+  document.getElementById('showInvoicedCasesBtn')?.addEventListener('click', () => {
+    setShowInvoicedOnCaseSheet(!getShowInvoicedOnCaseSheet());
+    syncShowInvoicedButtonUI();
+    hydrateCasesTable();
+  });
+  syncShowInvoicedButtonUI();
 
   document.addEventListener('click', e => {
     const panel = document.getElementById('columnSettingsPanel');
@@ -330,7 +383,7 @@ function assignColumnIndices() {
   });
 }
 
-/** 区分・条例・ステータス等は常時プルダウン */
+/** 条例・ステータス等は常時プルダウン（区分は一覧では編集不可・案件フォームで変更） */
 function initPersistentSelects() {
   document.querySelectorAll('td[data-edit^="select-"]').forEach(td => {
     if (td.querySelector('.cell-native-select')) return;
@@ -688,7 +741,6 @@ function readSelectValue(td) {
   const kubun = td.querySelector('.kbn-pill');
   if (kubun) return kubun.textContent.trim();
   const b = td.querySelector('.badge:not([data-status])');
-  if (b && getEditType(td) === 'select-hatchu') return b.textContent.trim();
   if (b && getEditType(td) === 'select-category') return b.textContent.trim();
   return td.textContent.trim();
 }
@@ -833,11 +885,6 @@ function refreshNegativeStyles(row) {
     }
   }
 
-  row.querySelectorAll('td[data-edit="select-paid"]').forEach(td => {
-    const sel = td.querySelector('.cell-native-select');
-    const val = sel ? sel.value : td.textContent.trim();
-    td.classList.toggle('cell-value--negative', val === '未');
-  });
 }
 
 function toggleNeg(el, neg) {

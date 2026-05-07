@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>TOC-BASE | 仕入登録</title>
+  <title>TOC-BASE | 仕入管理</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;600;700&display=swap" rel="stylesheet" />
@@ -13,7 +13,7 @@
   <script src="js/nav.js" defer></script>
   <script src="js/case-purchases.js" defer></script>
 </head>
-<body data-nav="purchases">
+<body data-nav="purchase-mgmt">
 
 <div class="app-shell">
   <header class="app-header">
@@ -62,13 +62,22 @@
         </a>
       </li>
       <li class="sidebar-nav__item">
-        <a href="case-purchases.html" class="sidebar-nav__link" data-nav="purchases">
+        <a href="media-mgmt.html" class="sidebar-nav__link" data-nav="media-mgmt">
+          <svg class="sidebar-nav__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="4" width="18" height="16" rx="2"/>
+            <line x1="7" y1="8" x2="17" y2="8"/><line x1="7" y1="12" x2="17" y2="12"/><line x1="7" y1="16" x2="13" y2="16"/>
+          </svg>
+          媒体管理
+        </a>
+      </li>
+      <li class="sidebar-nav__item">
+        <a href="case-purchases.html" class="sidebar-nav__link" data-nav="purchase-mgmt">
           <svg class="sidebar-nav__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/>
             <line x1="3" y1="6" x2="21" y2="6"/>
             <path d="M16 10a4 4 0 01-8 0"/>
           </svg>
-          仕入登録
+          仕入管理
         </a>
       </li>
     </ul>
@@ -112,7 +121,8 @@
           仕入先マスタ
         </a>
       </li>
-    </ul>    <span class="sidebar-section-label">設定・ツール</span>
+    </ul>
+    <span class="sidebar-section-label">設定・ツール</span>
     <ul class="sidebar-nav">
       <li class="sidebar-nav__item">
         <a href="settings-goals.html" class="sidebar-nav__link" data-nav="goals">
@@ -128,13 +138,13 @@
 
   <main class="app-main page-scroll page-stack">
     <header class="purchase-page-header">
-      <h1 class="purchase-page-header__title">仕入登録</h1>
+      <h1 class="purchase-page-header__title">仕入管理</h1>
     </header>
 
-    <div class="purchase-mode-tabs" role="tablist" aria-label="登録モード">
-      <button type="button" class="purchase-mode-tabs__btn is-active" role="tab" aria-selected="true" data-mode="case" id="tabCase">案件ベース</button>
-      <button type="button" class="purchase-mode-tabs__btn" role="tab" aria-selected="false" data-mode="invoice" id="tabInvoice">請求書ベース</button>
-      <button type="button" class="purchase-mode-tabs__btn" role="tab" aria-selected="false" data-mode="bulk" id="tabBulk">一括ベース</button>
+    <div class="purchase-mode-tabs" role="tablist" aria-label="追加の方法">
+      <button type="button" class="purchase-mode-tabs__btn is-active" role="tab" aria-selected="true" data-mode="case" id="tabCase">案件単位</button>
+      <button type="button" class="purchase-mode-tabs__btn" role="tab" aria-selected="false" data-mode="invoice" id="tabInvoice">請求書単位</button>
+      <button type="button" class="purchase-mode-tabs__btn" role="tab" aria-selected="false" data-mode="bulk" id="tabBulk">個別追加</button>
     </div>
 
     <section id="panelCase" class="purchase-panel" role="tabpanel" aria-labelledby="tabCase">
@@ -165,6 +175,7 @@
               <th>#</th>
               <th>仕入先</th>
               <th>請求日</th>
+              <th>課税区分</th>
               <th class="num">仕入金額</th>
               <th class="num">仕入金額（税込）</th>
               <th>操作</th>
@@ -176,46 +187,23 @@
     </section>
 
     <section id="panelInvoice" class="purchase-panel purchase-panel--invoice" role="tabpanel" aria-labelledby="tabInvoice" hidden>
-      <div class="purchase-invoice-split purchase-invoice-split--top">
-        <h2 class="purchase-section-title" id="invoiceListHeading">請求書一覧</h2>
-        <p class="purchase-section-lead">登録済みの仕入を、仕入先・請求日（請求書の日付）ごとに集計しています。<strong>行をクリック</strong>すると、下の「請求書の内容」に取り込まれます。</p>
-        <div class="list-table-wrap list-table-wrap--invoice-keys">
-          <table class="list-table list-table--compact" aria-labelledby="invoiceListHeading">
-            <thead>
-              <tr>
-                <th>仕入先</th>
-                <th>請求日</th>
-                <th class="num">行数</th>
-                <th class="num">仕入金額計（税抜）</th>
-              </tr>
-            </thead>
-            <tbody id="invoiceKeyTableBody"></tbody>
-          </table>
+      <div class="purchase-case-panel">
+        <div class="purchase-case-grid">
+          <label for="invVendor">仕入先</label>
+          <select id="invVendor" class="toolbar__select" style="max-width:100%;min-width:280px"></select>
+          <span class="purchase-case-grid__k">請求日</span>
+          <div class="purchase-case-grid__v purchase-case-grid__v--control">
+            <select id="invDate" class="toolbar__select purchase-invoice-date js-inv-toolbar-date" aria-label="請求日（登録済みの日付から選択）"></select>
+          </div>
+          <span class="purchase-case-grid__k"></span>
+          <div class="purchase-case-grid__v">
+            <button type="button" class="btn btn--ghost btn--sm" id="btnNewInvoice">新規作成</button>
+          </div>
         </div>
       </div>
 
       <div class="purchase-invoice-split purchase-invoice-split--bottom">
         <h2 class="purchase-section-title" id="invoiceDetailHeading">請求書の内容・明細</h2>
-        <p class="purchase-section-lead">一覧の行をクリックするか、仕入先と請求日の両方を指定すると、そのキーに紐づく明細を表示します。「新規作成」で別の請求書として入力を始められます。</p>
-
-        <div class="purchase-invoice-editor" role="region" aria-labelledby="invoiceDetailHeading">
-          <div class="purchase-invoice-editor__label">仕入先・請求日（この請求書のキー）</div>
-          <div class="purchase-invoice-toolbar purchase-invoice-toolbar--editor">
-            <div class="purchase-invoice-toolbar__field purchase-invoice-toolbar__field--grow">
-              <label for="invVendor">仕入先</label>
-              <select id="invVendor" class="toolbar__select purchase-invoice-select" aria-describedby="invVendorHint"></select>
-              <span id="invVendorHint" class="purchase-field-hint">マスタの仕入先名</span>
-            </div>
-            <div class="purchase-invoice-toolbar__field">
-              <label for="invDate">請求日（請求書の日付）</label>
-              <input id="invDate" type="date" class="toolbar__search-input purchase-invoice-date" aria-describedby="invDateHint" />
-              <span id="invDateHint" class="purchase-field-hint">カレンダーで選択</span>
-            </div>
-            <div class="purchase-invoice-toolbar__actions">
-              <button type="button" class="btn btn--ghost btn--sm" id="btnNewInvoice">新規作成</button>
-            </div>
-          </div>
-        </div>
 
         <div class="page-toolbar purchase-toolbar purchase-toolbar--invoice-detail">
           <div class="purchase-toolbar__start">
@@ -230,6 +218,7 @@
               <tr>
                 <th>#</th>
                 <th>見積No.（案件）</th>
+                <th>課税区分</th>
                 <th class="num">仕入金額</th>
                 <th class="num">仕入金額（税込）</th>
                 <th>操作</th>
@@ -242,6 +231,24 @@
     </section>
 
     <section id="panelBulk" class="purchase-panel" role="tabpanel" aria-labelledby="tabBulk" hidden>
+      <div class="purchase-bulk-filters">
+        <label class="purchase-bulk-filters__label" for="bulkListFilter">表示</label>
+        <select id="bulkListFilter" class="toolbar__select purchase-bulk-filters__select" aria-label="個別追加の表示絞り込み">
+          <option value="all">すべて</option>
+          <option value="linkedBoth">案件・請求書ともに紐づき</option>
+          <option value="caseUnlinked">案件に紐づかない仕入のみ</option>
+          <option value="invoiceOrphan">請求書に紐づかない仕入のみ</option>
+        </select>
+        <label class="purchase-bulk-filters__label" for="bulkListSearch">キーワード</label>
+        <input
+          type="search"
+          id="bulkListSearch"
+          class="toolbar__search-input purchase-bulk-filters__search"
+          placeholder="見積No.・仕入先・請求日で検索"
+          autocomplete="off"
+          aria-label="個別追加のキーワード検索"
+        />
+      </div>
       <div class="page-toolbar purchase-toolbar">
         <div class="purchase-toolbar__start">
           <button type="button" class="btn btn--ghost btn--sm" id="btnAddBulkRow">＋ 行を追加</button>
@@ -257,6 +264,7 @@
               <th>見積No.</th>
               <th>仕入先</th>
               <th>請求日</th>
+              <th>課税区分</th>
               <th class="num">仕入金額</th>
               <th class="num">仕入金額（税込）</th>
               <th>操作</th>
@@ -267,6 +275,21 @@
       </div>
     </section>
   </main>
+
+  <dialog id="newInvoiceDialog" class="case-invoice-dialog">
+    <div class="case-invoice-dialog__form">
+      <h2 class="case-invoice-dialog__title">請求書の新規作成</h2>
+      <p class="case-invoice-dialog__lead">仕入先と請求日を入力してください。確定後、下の明細に行を追加して保存すると仕入に登録されます。</p>
+      <label class="case-invoice-dialog__label" for="newInvoiceVendor">仕入先</label>
+      <select id="newInvoiceVendor" class="toolbar__select" style="width:100%;max-width:100%;box-sizing:border-box;margin-bottom:4px"></select>
+      <label class="case-invoice-dialog__label" for="newInvoiceDate">請求日</label>
+      <input type="date" id="newInvoiceDate" class="case-invoice-dialog__date" />
+      <div class="case-invoice-dialog__actions">
+        <button type="button" class="btn btn--primary" id="newInvoiceConfirm">確定</button>
+        <button type="button" class="btn btn--ghost" id="newInvoiceCancel">キャンセル</button>
+      </div>
+    </div>
+  </dialog>
 </div>
 </body>
 </html>

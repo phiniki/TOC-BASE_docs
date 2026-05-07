@@ -63,13 +63,22 @@
         </a>
       </li>
       <li class="sidebar-nav__item">
-        <a href="case-purchases.html" class="sidebar-nav__link" data-nav="purchases">
+        <a href="media-mgmt.html" class="sidebar-nav__link" data-nav="media-mgmt">
+          <svg class="sidebar-nav__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="4" width="18" height="16" rx="2"/>
+            <line x1="7" y1="8" x2="17" y2="8"/><line x1="7" y1="12" x2="17" y2="12"/><line x1="7" y1="16" x2="13" y2="16"/>
+          </svg>
+          媒体管理
+        </a>
+      </li>
+      <li class="sidebar-nav__item">
+        <a href="case-purchases.html" class="sidebar-nav__link" data-nav="purchase-mgmt">
           <svg class="sidebar-nav__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/>
             <line x1="3" y1="6" x2="21" y2="6"/>
             <path d="M16 10a4 4 0 01-8 0"/>
           </svg>
-          仕入登録
+          仕入管理
         </a>
       </li>
     </ul>
@@ -207,12 +216,10 @@
               <th data-col="14" class="num" style="min-width:92px">実際粗利</th>
               <th data-col="15" class="num" style="min-width:88px">実際粗利率</th>
               <th data-col="16" class="num" style="min-width:88px">粗利率差異</th>
-              <th data-col="17" style="min-width:72px">請求済</th>
-              <th data-col="18" style="min-width:118px">請求日</th>
-              <th data-col="19" style="min-width:72px">入金済</th>
-              <th data-col="20" style="min-width:118px">入金日</th>
-              <th data-col="21" class="num" style="min-width:108px">売上金額（税込）</th>
-              <th data-col="22" class="num" style="min-width:88px">消費税</th>
+              <th data-col="17" style="min-width:118px">請求日</th>
+              <th data-col="18" style="min-width:132px">入金</th>
+              <th data-col="19" class="num" style="min-width:108px">売上金額（税込）</th>
+              <th data-col="20" class="num" style="min-width:88px">消費税</th>
             </tr>
           </thead>
           <tbody id="completeTableBody"></tbody>
@@ -222,6 +229,19 @@
 
   </main><!-- /app-main -->
 </div><!-- /app-shell -->
+
+<dialog id="paidDoneDialog" class="case-invoice-dialog">
+  <form method="dialog" class="case-invoice-dialog__form" id="paidDoneForm">
+    <h2 class="case-invoice-dialog__title">入金済みにする</h2>
+    <p class="case-invoice-dialog__lead" id="paidDoneCaseLabel"></p>
+    <label class="case-invoice-dialog__label" for="paidDoneDate">入金日</label>
+    <input type="date" id="paidDoneDate" class="case-invoice-dialog__date" required />
+    <div class="case-invoice-dialog__actions">
+      <button type="submit" class="btn btn--primary" id="paidDoneSave">保存</button>
+      <button type="button" class="btn btn--ghost" id="paidDoneCancel">キャンセル</button>
+    </div>
+  </form>
+</dialog>
 
 <script src="js/data-store.js"></script>
 <script src="js/fiscal-period.js"></script>

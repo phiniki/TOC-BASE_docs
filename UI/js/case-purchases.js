@@ -1,5 +1,9 @@
+/**
+ * 仕入管理 — 案件単位 / 請求書単位 / 個別追加（画面は case-purchases.html）
+ */
 (function () {
   const MODE_STORAGE_KEY = 'toc-purchase-reg-mode';
+  const PURCHASE_TAX_RATE = 0.1;
 
   function parseMoneyInput(str) {
     return parseInt(String(str ?? '').replace(/[^\d]/g, ''), 10) || 0;
@@ -7,6 +11,24 @@
 
   function formatMoneyInput(n) {
     return Math.round(Number(n) || 0).toLocaleString('ja-JP');
+  }
+
+  function normalizeTaxType(v) {
+    return v === 'nonTaxable' ? 'nonTaxable' : 'taxable';
+  }
+
+  function calcAmountInc(amountEx, taxType) {
+    const ex = Math.max(0, Math.round(Number(amountEx) || 0));
+    if (normalizeTaxType(taxType) === 'nonTaxable') return ex;
+    return Math.round(ex * (1 + PURCHASE_TAX_RATE));
+  }
+
+  function taxTypeOptionsHtml(selectedTaxType) {
+    const t = normalizeTaxType(selectedTaxType);
+    return (
+      `<option value="taxable"${t === 'taxable' ? ' selected' : ''}>課税</option>` +
+      `<option value="nonTaxable"${t === 'nonTaxable' ? ' selected' : ''}>非課税</option>`
+    );
   }
 
   function escapeHtml(s) {
@@ -27,6 +49,7 @@
     return TocDataStore.getState().vendors.map(v => v.name);
   }
 
+
   /** 請求日: type=date 用（—・空・不正値は ''）／キー突合もこれで統一 */
   function normInvoiceDateStr(raw) {
     const s = String(raw ?? '').trim();
@@ -39,11 +62,38 @@
     return (vendorName || '').trim() + '\t' + normInvoiceDateStr(invoiceDate);
   }
 
-  /** マスタ外の仕入先も1行に含められるよう、選択値付きで option HTML を組み立てる */
-  function vendorOptionsHtml(selectedName) {
-    const vendors = vendorOptions();
+  /**
+   * 仕入先プルダウン用の名前集合
+   * - case: マスタ＋「案件に紐づく」明細のみ（未紐づけバケット除外）
+   * - invoice: マスタ＋案件紐づけかつ請求書キー（仕入先・請求日）そろった明細のみ
+   * - bulk: マスタ＋全明細
+   */
+  function buildVendorNameSet(scope) {
+    if (!window.TocDataStore) return vendorOptions().slice().sort((a, b) => a.localeCompare(b, 'ja'));
+    const UID = TocDataStore.UNLINKED_PURCHASE_CASE_ID;
+    const state = TocDataStore.getState();
+    const set = new Set(vendorOptions());
+    const excludeCaseUnlinked = scope === 'case' || scope === 'invoice';
+    const requireInvoiceKey = scope === 'invoice';
+    Object.entries(state.purchases).forEach(([caseId, lines]) => {
+      if (!Array.isArray(lines)) return;
+      if (excludeCaseUnlinked && caseId === UID) return;
+      lines.forEach(l => {
+        if (requireInvoiceKey) {
+          if (!(l.vendorName || '').trim() || !normInvoiceDateStr(l.invoiceDate)) return;
+        }
+        const n = (l.vendorName || '').trim();
+        if (n) set.add(n);
+      });
+    });
+    return Array.from(set).sort((a, b) => a.localeCompare(b, 'ja'));
+  }
+
+  /** @param {'case'|'invoice'|'bulk'} scope */
+  function vendorOptionsHtml(selectedName, scope) {
+    const sc = scope || 'bulk';
     const sel = (selectedName || '').trim();
-    let list = vendors.slice();
+    let list = buildVendorNameSet(sc);
     if (sel && !list.some(v => v === sel)) list = [...list, sel];
     list.sort((a, b) => a.localeCompare(b, 'ja'));
     const head = '<option value="">選択してください</option>';
@@ -53,27 +103,126 @@
     return head + body;
   }
 
-  function fillVendorSelect(selectEl, current) {
+  function fillVendorSelect(selectEl, current, scope) {
     if (!selectEl) return;
-    selectEl.innerHTML = vendorOptionsHtml(current);
+    selectEl.innerHTML = vendorOptionsHtml(current, scope || 'bulk');
   }
 
-  function readKeyRowVendorDate(tr) {
-    if (!tr) return { vendor: '', date: '' };
-    const vendor = (tr.getAttribute('data-vendor') || '').trim();
-    const date = normInvoiceDateStr(tr.getAttribute('data-inv-date') || '');
-    return { vendor, date };
+  /** 個別追加の並び：addedAt（ms）または id が p_<epoch>_ 形式のとき */
+  function purchaseLineAddedAtMs(line) {
+    const n = Number(line?.addedAt);
+    if (Number.isFinite(n) && n > 0) return n;
+    const m = String(line?.id || '').match(/^p_(\d+)_/);
+    if (m) {
+      const t = parseInt(m[1], 10);
+      if (Number.isFinite(t) && t > 0) return t;
+    }
+    return 0;
   }
 
-  function caseOptionsHtml(selectedCaseId) {
+  /** 登録済み仕入から、仕入先が一致する行の請求日（案件に紐づく明細のみ・正規化済み・新しい順） */
+  function invoiceDatesForVendor(vendorTrim) {
+    if (!window.TocDataStore) return [];
+    const UID = TocDataStore.UNLINKED_PURCHASE_CASE_ID;
+    const v = (vendorTrim || '').trim();
+    if (!v) return [];
+    const set = new Set();
+    Object.entries(TocDataStore.getState().purchases).forEach(([caseId, lines]) => {
+      if (caseId === UID || !Array.isArray(lines)) return;
+      lines.forEach(l => {
+        if ((l.vendorName || '').trim() !== v) return;
+        const d = normInvoiceDateStr(l.invoiceDate);
+        if (d) set.add(d);
+      });
+    });
+    return Array.from(set).sort((a, b) => b.localeCompare(a));
+  }
+
+  /** 個別追加：未紐づけ案件を含む案件プルダウン */
+  function caseOptionsHtmlBulk(selectedCaseId) {
+    const UID = TocDataStore.UNLINKED_PURCHASE_CASE_ID;
+    const noneSel = !selectedCaseId ? ' selected' : '';
+    const head = `<option value=""${noneSel}>選択してください</option>`;
+    const unSel = selectedCaseId === UID ? ' selected' : '';
+    const unOpt = `<option value="${escapeHtml(UID)}"${unSel}>（案件なし）</option>`;
     const cases = TocDataStore.getState().cases;
-    return cases
+    const rest = cases
       .map(c => {
         const sel = c.caseId === selectedCaseId ? ' selected' : '';
-        const lab = (c.estimateNo || '（未採番）') + ' — ' + (c.client || '').slice(0, 16);
+        const lab =
+          (c.estimateNo || '（未採番）') +
+          ' / ' +
+          (c.client || '—') +
+          ' / ' +
+          (c.building || '—');
         return `<option value="${escapeHtml(c.caseId)}"${sel}>${escapeHtml(lab)}</option>`;
       })
       .join('');
+    return head + unOpt + rest;
+  }
+
+  function caseBaseOptionsHtml(selectedCaseId) {
+    const sel = (selectedCaseId || '').trim();
+    const cases = TocDataStore.getState().cases;
+    return (
+      '<option value="">選択してください</option>' +
+      cases
+        .map(c => {
+          const on = c.caseId === sel ? ' selected' : '';
+          const lab =
+            (c.estimateNo || '（未採番）') +
+            ' / ' +
+            (c.client || '—') +
+            ' / ' +
+            (c.building || '—');
+          return `<option value="${escapeHtml(c.caseId)}"${on}>${escapeHtml(lab)}</option>`;
+        })
+        .join('')
+    );
+  }
+
+  /** 請求書明細行：実案件のみ（未紐づけバケットは出さない） */
+  function caseOptionsHtmlInvoiceDetail(selectedCaseId) {
+    const cases = TocDataStore.getState().cases;
+    const noneSel = !selectedCaseId ? ' selected' : '';
+    const head = `<option value=""${noneSel}>選択してください</option>`;
+    if (!cases.length) {
+      return head;
+    }
+    const body = cases
+      .map(c => {
+        const sel = c.caseId === selectedCaseId ? ' selected' : '';
+        const lab =
+          (c.estimateNo || '（未採番）') +
+          ' / ' +
+          (c.client || '—') +
+          ' / ' +
+          (c.building || '—');
+        return `<option value="${escapeHtml(c.caseId)}"${sel}>${escapeHtml(lab)}</option>`;
+      })
+      .join('');
+    return head + body;
+  }
+
+  function purchaseHasInvoiceKey(line) {
+    return !!(line && (line.vendorName || '').trim() && normInvoiceDateStr(line.invoiceDate));
+  }
+
+  function bulkRowMatchesViewFilter(caseId, line, filterKey, searchRaw) {
+    const UID = TocDataStore.UNLINKED_PURCHASE_CASE_ID;
+    const caseUnlinked = caseId === UID;
+    const hasKey = purchaseHasInvoiceKey(line);
+    if (filterKey === 'linkedBoth' && (caseUnlinked || !hasKey)) return false;
+    if (filterKey === 'caseUnlinked' && !caseUnlinked) return false;
+    if (filterKey === 'invoiceOrphan' && hasKey) return false;
+    const q = (searchRaw || '').trim().toLowerCase();
+    if (q) {
+      const est = String(line.estimateNo || '').toLowerCase();
+      const vn = String(line.vendorName || '').toLowerCase();
+      const idt = String(line.invoiceDate || '').toLowerCase();
+      if (!est.includes(q) && !vn.includes(q) && !idt.includes(q)) return false;
+    }
+    return true;
   }
 
   function renumber(tbody) {
@@ -84,6 +233,13 @@
   }
 
   function bindDelAndTotals(tbody, onChange) {
+    tbody.querySelectorAll('select.js-purchase-vendor').forEach(sel => {
+      enhanceSearchableSelect(sel, '仕入先名で検索');
+    });
+    tbody.querySelectorAll('select.js-bulk-case, select.js-inv-case').forEach(sel => {
+      enhanceSearchableSelect(sel, '見積No.・取引先・物件名で検索');
+    });
+
     tbody.querySelectorAll('.js-purchase-del').forEach(btn => {
       btn.addEventListener('click', () => {
         const tr = btn.closest('tr');
@@ -92,7 +248,31 @@
         onChange();
       });
     });
-    tbody.querySelectorAll('.js-purchase-ex, .js-purchase-inc, .js-purchase-vendor, .js-purchase-invdate, .js-inv-case, .js-bulk-case').forEach(el => {
+    tbody.querySelectorAll('tr').forEach(tr => {
+      const exInput = tr.querySelector('.js-purchase-ex');
+      const incInput = tr.querySelector('.js-purchase-inc');
+      const taxSelect = tr.querySelector('.js-purchase-tax');
+      const recalc = () => {
+        if (!exInput || !incInput || !taxSelect) return;
+        const ex = parseMoneyInput(exInput.value);
+        incInput.value = formatMoneyInput(calcAmountInc(ex, taxSelect.value));
+      };
+      if (incInput) incInput.readOnly = true;
+      recalc();
+      exInput?.addEventListener('input', () => {
+        recalc();
+        onChange();
+      });
+      exInput?.addEventListener('change', () => {
+        recalc();
+        onChange();
+      });
+      taxSelect?.addEventListener('change', () => {
+        recalc();
+        onChange();
+      });
+    });
+    tbody.querySelectorAll('.js-purchase-vendor, .js-purchase-invdate, .js-inv-case, .js-bulk-case').forEach(el => {
       el.addEventListener('change', onChange);
       el.addEventListener('input', onChange);
     });
@@ -105,11 +285,85 @@
         id: tr.dataset.purchaseId || newPurchaseId(),
         vendorName: tr.querySelector('.js-purchase-vendor')?.value || '',
         invoiceDate: tr.querySelector('.js-purchase-invdate')?.value || '',
+        taxType: normalizeTaxType(tr.querySelector('.js-purchase-tax')?.value),
         amountEx: parseMoneyInput(tr.querySelector('.js-purchase-ex')?.value),
         amountInc: parseMoneyInput(tr.querySelector('.js-purchase-inc')?.value),
       });
     });
     return out;
+  }
+
+  function enhanceSearchableSelect(selectEl, searchPlaceholder) {
+    if (!selectEl || selectEl.dataset.searchableEnhanced === '1') return;
+    selectEl.dataset.searchableEnhanced = '1';
+    selectEl.style.display = 'none';
+    const wrap = document.createElement('div');
+    wrap.className = 'purchase-combobox';
+    const trigger = document.createElement('button');
+    trigger.type = 'button';
+    trigger.className = 'btn btn--ghost btn--sm purchase-combobox__trigger';
+    const menu = document.createElement('div');
+    menu.className = 'purchase-combobox__menu';
+    menu.hidden = true;
+    const search = document.createElement('input');
+    search.type = 'search';
+    search.className = 'toolbar__search-input purchase-combobox__search';
+    search.placeholder = searchPlaceholder || '検索';
+    search.autocomplete = 'off';
+    const list = document.createElement('div');
+    list.className = 'purchase-combobox__list';
+    menu.appendChild(search);
+    menu.appendChild(list);
+    wrap.appendChild(trigger);
+    wrap.appendChild(menu);
+    selectEl.parentNode.insertBefore(wrap, selectEl);
+    wrap.appendChild(selectEl);
+
+    const render = () => {
+      const q = search.value.trim().toLowerCase();
+      const opts = Array.from(selectEl.options);
+      const selected = opts.find(o => o.value === selectEl.value);
+      trigger.textContent = selected ? selected.textContent : '選択してください';
+      list.innerHTML = '';
+      opts.forEach(o => {
+        if (String(o.value || '') === '') return;
+        const txt = String(o.textContent || '');
+        if (q && !txt.toLowerCase().includes(q)) return;
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'purchase-combobox__opt';
+        b.textContent = txt;
+        b.addEventListener('click', () => {
+          selectEl.value = o.value;
+          selectEl.dispatchEvent(new Event('change', { bubbles: true }));
+          menu.hidden = true;
+          search.value = '';
+          render();
+        });
+        list.appendChild(b);
+      });
+    };
+
+    const close = () => {
+      menu.hidden = true;
+      search.value = '';
+      render();
+    };
+
+    trigger.addEventListener('click', () => {
+      menu.hidden = !menu.hidden;
+      if (!menu.hidden) {
+        search.focus();
+        render();
+      }
+    });
+    search.addEventListener('input', render);
+    document.addEventListener('click', e => {
+      if (!wrap.contains(e.target)) close();
+    });
+    selectEl.addEventListener('change', render);
+    new MutationObserver(render).observe(selectEl, { childList: true, subtree: true, attributes: true });
+    render();
   }
 
   document.addEventListener('DOMContentLoaded', () => {
@@ -133,40 +387,62 @@
 
     const invVendor = document.getElementById('invVendor');
     const invDate = document.getElementById('invDate');
+    const bulkListFilter = document.getElementById('bulkListFilter');
+    const bulkListSearch = document.getElementById('bulkListSearch');
     const btnNewInvoice = document.getElementById('btnNewInvoice');
-    const invoiceKeyTableBody = document.getElementById('invoiceKeyTableBody');
     const invoiceDetailBody = document.getElementById('invoiceDetailBody');
     const btnAddInvoiceRow = document.getElementById('btnAddInvoiceRow');
     const totalsInvoice = document.getElementById('purchaseTotalsInvoice');
+    const newInvoiceDialog = document.getElementById('newInvoiceDialog');
+    const newInvoiceVendor = document.getElementById('newInvoiceVendor');
+    const newInvoiceDate = document.getElementById('newInvoiceDate');
+
+    /** 請求書ベース: 一覧の選択が外れても、確定した仕入先×請求日を行追加・保存に使う */
+    let lastInvoiceKeyContext = null;
+
+    /** @param {string[]=} extraDates データにまだ無い日付を選択肢に含める（新規作成ダイアログ用） */
+    function fillInvoiceDateSelect(preferredDate, extraDates) {
+      const v = (invVendor?.value || '').trim();
+      const pref =
+        preferredDate !== undefined
+          ? normInvoiceDateStr(preferredDate)
+          : normInvoiceDateStr(invDate?.value || '');
+      if (!invDate) return;
+      const set = new Set(invoiceDatesForVendor(v));
+      if (Array.isArray(extraDates)) {
+        extraDates.forEach(x => {
+          const n = normInvoiceDateStr(x);
+          if (n) set.add(n);
+        });
+      }
+      const dates = Array.from(set).sort((a, b) => b.localeCompare(a));
+      invDate.innerHTML =
+        '<option value="">選択してください</option>' +
+        dates.map(d => `<option value="${escapeHtml(d)}">${escapeHtml(d)}</option>`).join('');
+      if (pref && dates.includes(pref)) invDate.value = pref;
+      else invDate.value = '';
+    }
 
     function applyInvoiceToolbarVendorDate(vendor, dateNorm) {
       const v = (vendor || '').trim();
       const d = normInvoiceDateStr(dateNorm || '');
-      if (invVendor) fillVendorSelect(invVendor, v);
-      if (invDate) invDate.value = d;
-      lastInvoiceKeyContext = v || d ? { vendor: v, date: d } : null;
+      if (invVendor) fillVendorSelect(invVendor, v, 'invoice');
+      fillInvoiceDateSelect(d, d ? [d] : []);
+      const selD = normInvoiceDateStr(invDate?.value || '');
+      lastInvoiceKeyContext = v || selD ? { vendor: v, date: selD } : null;
     }
 
-    /** 仕入先・請求日が揃ったら DB から明細を表示（旧「明細を表示」ボタンの代替） */
     function syncInvoiceDetailFromToolbar() {
       const v = (invVendor?.value || '').trim();
       const d = normInvoiceDateStr(invDate?.value || '');
       if (!v || !d) return;
       lastInvoiceKeyContext = { vendor: v, date: d };
-      invoiceKeyTableBody?.querySelectorAll('.invoice-key-row').forEach(x => {
-        const k = readKeyRowVendorDate(x);
-        x.classList.toggle('is-selected', k.vendor === v && k.date === d);
-      });
       loadInvoiceDetail(v, d);
     }
 
     const bulkTableBody = document.getElementById('bulkTableBody');
     const btnAddBulk = document.getElementById('btnAddBulkRow');
     const totalsBulk = document.getElementById('purchaseTotalsBulk');
-
-    let activeMode = 'case';
-    /** 請求書ベース: 一覧の選択が外れても、確定した仕入先×請求日を行追加・保存に使う */
-    let lastInvoiceKeyContext = null;
 
     const p = new URLSearchParams(location.search);
     let urlCaseId = p.get('id');
@@ -175,9 +451,10 @@
       const hit = TocDataStore.getCase(legacyNo);
       if (hit) urlCaseId = hit.caseId;
     }
+    const UID = TocDataStore.UNLINKED_PURCHASE_CASE_ID;
+    if (urlCaseId === UID) urlCaseId = '';
 
     function setMode(mode) {
-      activeMode = mode;
       try {
         localStorage.setItem(MODE_STORAGE_KEY, mode);
       } catch (_) {}
@@ -195,8 +472,9 @@
         updateCaseTotals();
       }
       if (mode === 'invoice') {
-        fillVendorSelect(invVendor);
-        refreshInvoiceKeyTable();
+        fillVendorSelect(invVendor, '', 'invoice');
+        fillInvoiceDateSelect('');
+        clearInvoiceDetail();
         updateInvoiceTotals();
       }
       if (mode === 'bulk') {
@@ -207,15 +485,7 @@
 
     function populateCaseDropdown() {
       if (!caseBaseSelect) return;
-      const cases = TocDataStore.getState().cases;
-      caseBaseSelect.innerHTML =
-        '<option value="">選択してください</option>' +
-        cases
-          .map(c => {
-            const lab = (c.estimateNo || '—') + ' / ' + (c.client || '').slice(0, 14);
-            return `<option value="${escapeHtml(c.caseId)}">${escapeHtml(lab)}</option>`;
-          })
-          .join('');
+      caseBaseSelect.innerHTML = caseBaseOptionsHtml(caseBaseSelect.value);
     }
 
     function getSelectedCaseId() {
@@ -245,14 +515,16 @@
       lines.forEach((line, i) => {
         const tr = document.createElement('tr');
         tr.dataset.purchaseId = line.id || newPurchaseId();
-        const vOpts = vendorOptionsHtml(line.vendorName);
+        const vOpts = vendorOptionsHtml(line.vendorName, 'case');
         const inv = line.invoiceDate ? escapeHtml(String(line.invoiceDate).slice(0, 10)) : '';
+        const taxOpts = taxTypeOptionsHtml(line.taxType);
         tr.innerHTML = `
           <td class="num">${i + 1}</td>
           <td><select class="toolbar__select js-purchase-vendor" style="min-width:200px">${vOpts}</select></td>
           <td><input type="date" class="toolbar__search-input js-purchase-invdate" value="${inv}" /></td>
+          <td><select class="toolbar__select js-purchase-tax" style="min-width:110px">${taxOpts}</select></td>
           <td class="num"><input type="text" class="toolbar__search-input js-purchase-ex" style="text-align:right;width:120px" value="${formatMoneyInput(line.amountEx)}" /></td>
-          <td class="num"><input type="text" class="toolbar__search-input js-purchase-inc" style="text-align:right;width:120px" value="${formatMoneyInput(line.amountInc)}" /></td>
+          <td class="num"><input type="text" class="toolbar__search-input js-purchase-inc" style="text-align:right;width:120px" value="${formatMoneyInput(calcAmountInc(line.amountEx, line.taxType))}" /></td>
           <td class="actions"><button type="button" class="link-action js-purchase-del">削除</button></td>`;
         tbodyCase.appendChild(tr);
       });
@@ -273,8 +545,9 @@
           id: newPurchaseId(),
           vendorName: '',
           invoiceDate: '',
+          taxType: 'taxable',
           amountEx: 0,
-          amountInc: 0,
+          amountInc: calcAmountInc(0, 'taxable'),
         });
       }
       renderCaseRows(lines);
@@ -300,62 +573,16 @@
         alert('案件を選択してください。');
         return;
       }
-      TocDataStore.setPurchases(cid, collectCaseLines(tbodyCase));
+      const prev = TocDataStore.getPurchases(cid);
+      const prevById = new Map(prev.map(l => [l.id, l]));
+      const merged = collectCaseLines(tbodyCase).map(l => {
+        const p = prevById.get(l.id);
+        const at = p && Number(p.addedAt) > 0 ? Number(p.addedAt) : null;
+        return at ? { ...l, addedAt: at } : l;
+      });
+      TocDataStore.setPurchases(cid, merged);
       alert('保存しました。');
       loadCaseTable();
-    }
-
-    function gatherInvoiceSummaries() {
-      const state = TocDataStore.getState();
-      const map = new Map();
-      Object.values(state.purchases).forEach(lines => {
-        if (!Array.isArray(lines)) return;
-        lines.forEach(l => {
-          const k = normInvKey(l.vendorName, l.invoiceDate);
-          if (!map.has(k)) {
-            map.set(k, {
-              vendorName: l.vendorName || '',
-              invoiceDate: normInvoiceDateStr(l.invoiceDate),
-              count: 0,
-              sumEx: 0,
-            });
-          }
-          const r = map.get(k);
-          r.count += 1;
-          r.sumEx += Number(l.amountEx) || 0;
-        });
-      });
-      return Array.from(map.values()).sort((a, b) => {
-        const d = (a.invoiceDate || '').localeCompare(b.invoiceDate || '');
-        if (d !== 0) return d;
-        return (a.vendorName || '').localeCompare(b.vendorName || '', 'ja');
-      });
-    }
-
-    function refreshInvoiceKeyTable() {
-      if (!invoiceKeyTableBody) return;
-      const rows = gatherInvoiceSummaries();
-      invoiceKeyTableBody.innerHTML = rows
-        .map(r => {
-          const dAttr = r.invoiceDate || '';
-          return `<tr class="invoice-key-row" data-vendor="${escapeHtml(r.vendorName)}" data-inv-date="${escapeHtml(dAttr)}">
-            <td>${escapeHtml(r.vendorName)}</td>
-            <td>${escapeHtml(dAttr ? dAttr : '—')}</td>
-            <td class="num">${r.count}</td>
-            <td class="num">¥${r.sumEx.toLocaleString('ja-JP')}</td>
-          </tr>`;
-        })
-        .join('');
-
-      invoiceKeyTableBody.querySelectorAll('.invoice-key-row').forEach(tr => {
-        tr.addEventListener('click', () => {
-          invoiceKeyTableBody.querySelectorAll('.invoice-key-row').forEach(x => x.classList.remove('is-selected'));
-          tr.classList.add('is-selected');
-          const { vendor: v, date: d } = readKeyRowVendorDate(tr);
-          applyInvoiceToolbarVendorDate(v, d);
-          loadInvoiceDetail(v, d);
-        });
-      });
     }
 
     function loadInvoiceDetail(vendorName, invoiceDate) {
@@ -364,7 +591,7 @@
       const state = TocDataStore.getState();
       const lines = [];
       Object.entries(state.purchases).forEach(([caseId, arr]) => {
-        if (!Array.isArray(arr)) return;
+        if (caseId === UID || !Array.isArray(arr)) return;
         arr.forEach(l => {
           if (normInvKey(l.vendorName, l.invoiceDate) === key) {
             lines.push({ ...l, caseId });
@@ -379,11 +606,13 @@
       lines.forEach((line, i) => {
         const tr = document.createElement('tr');
         tr.dataset.purchaseId = line.id || newPurchaseId();
+        const taxOpts = taxTypeOptionsHtml(line.taxType);
         tr.innerHTML = `
           <td class="num">${i + 1}</td>
-          <td><select class="toolbar__select js-inv-case" style="min-width:260px">${caseOptionsHtml(line.caseId)}</select></td>
+          <td><select class="toolbar__select js-inv-case" style="min-width:260px">${caseOptionsHtmlInvoiceDetail(line.caseId)}</select></td>
+          <td><select class="toolbar__select js-purchase-tax" style="min-width:110px">${taxOpts}</select></td>
           <td class="num"><input type="text" class="toolbar__search-input js-purchase-ex" style="text-align:right;width:120px" value="${formatMoneyInput(line.amountEx)}" /></td>
-          <td class="num"><input type="text" class="toolbar__search-input js-purchase-inc" style="text-align:right;width:120px" value="${formatMoneyInput(line.amountInc)}" /></td>
+          <td class="num"><input type="text" class="toolbar__search-input js-purchase-inc" style="text-align:right;width:120px" value="${formatMoneyInput(calcAmountInc(line.amountEx, line.taxType))}" /></td>
           <td class="actions"><button type="button" class="link-action js-purchase-del">削除</button></td>`;
         invoiceDetailBody.appendChild(tr);
       });
@@ -417,7 +646,7 @@
         return;
       }
       if (!idate) {
-        alert('請求日を入力してください。');
+        alert('請求日を選択してください。（案件単位・個別追加で、その仕入先の明細を登録すると選べます）');
         return;
       }
       const key = normInvKey(vendor, idate);
@@ -428,32 +657,43 @@
         const existing = TocDataStore.getPurchases(cid);
         updates[cid] = existing.filter(l => normInvKey(l.vendorName, l.invoiceDate) !== key);
       });
+      const prevAddedById = new Map();
+      Object.values(state.purchases).forEach(arr => {
+        (arr || []).forEach(l => {
+          if (l.id && Number(l.addedAt) > 0) prevAddedById.set(l.id, Number(l.addedAt));
+        });
+      });
       invoiceDetailBody.querySelectorAll('tr').forEach(tr => {
         const caseId = tr.querySelector('.js-inv-case')?.value;
         if (!caseId) return;
+        const pid = tr.dataset.purchaseId || newPurchaseId();
+        const at = prevAddedById.get(pid) || 0;
         const line = {
-          id: tr.dataset.purchaseId || newPurchaseId(),
+          id: pid,
           vendorName: vendor,
           invoiceDate: idate,
+          taxType: normalizeTaxType(tr.querySelector('.js-purchase-tax')?.value),
           amountEx: parseMoneyInput(tr.querySelector('.js-purchase-ex')?.value),
           amountInc: parseMoneyInput(tr.querySelector('.js-purchase-inc')?.value),
+          ...(at > 0 ? { addedAt: at } : {}),
         };
         updates[caseId].push(line);
       });
       TocDataStore.replacePurchasesForCases(updates);
       alert('保存しました。');
       lastInvoiceKeyContext = { vendor, date: idate };
-      refreshInvoiceKeyTable();
+      fillInvoiceDateSelect(idate, idate ? [idate] : []);
       loadInvoiceDetail(vendor, idate);
     }
 
     function loadBulkTable() {
       if (!bulkTableBody) return;
       const state = TocDataStore.getState();
+      const UID = TocDataStore.UNLINKED_PURCHASE_CASE_ID;
       const flat = [];
       Object.entries(state.purchases).forEach(([caseId, lines]) => {
         const c = state.cases.find(x => x.caseId === caseId);
-        const est = c?.estimateNo || '';
+        const est = caseId === UID ? '' : c?.estimateNo || '';
         if (!Array.isArray(lines)) return;
         lines.forEach(l => {
           flat.push({
@@ -465,6 +705,9 @@
         });
       });
       flat.sort((a, b) => {
+        const ta = purchaseLineAddedAtMs(a);
+        const tb = purchaseLineAddedAtMs(b);
+        if (tb !== ta) return tb - ta;
         const ea = a.estimateNo || '';
         const eb = b.estimateNo || '';
         const c0 = ea.localeCompare(eb, 'ja', { numeric: true });
@@ -477,28 +720,53 @@
       flat.forEach((line, i) => {
         const tr = document.createElement('tr');
         tr.dataset.purchaseId = line.id;
-        const vOpts = vendorOptionsHtml(line.vendorName);
+        tr.dataset.addedAt = String(purchaseLineAddedAtMs(line));
+        const vOpts = vendorOptionsHtml(line.vendorName, 'bulk');
         const inv = line.invoiceDate ? escapeHtml(String(line.invoiceDate).slice(0, 10)) : '';
+        const taxOpts = taxTypeOptionsHtml(line.taxType);
         tr.innerHTML = `
           <td class="num">${i + 1}</td>
-          <td><select class="toolbar__select js-bulk-case" style="min-width:240px">${caseOptionsHtml(line.caseId)}</select></td>
+          <td><select class="toolbar__select js-bulk-case" style="min-width:240px">${caseOptionsHtmlBulk(line.caseId)}</select></td>
           <td><select class="toolbar__select js-purchase-vendor" style="min-width:200px">${vOpts}</select></td>
           <td><input type="date" class="toolbar__search-input js-purchase-invdate" value="${inv}" /></td>
+          <td><select class="toolbar__select js-purchase-tax" style="min-width:110px">${taxOpts}</select></td>
           <td class="num"><input type="text" class="toolbar__search-input js-purchase-ex" style="text-align:right;width:120px" value="${formatMoneyInput(line.amountEx)}" /></td>
-          <td class="num"><input type="text" class="toolbar__search-input js-purchase-inc" style="text-align:right;width:120px" value="${formatMoneyInput(line.amountInc)}" /></td>
+          <td class="num"><input type="text" class="toolbar__search-input js-purchase-inc" style="text-align:right;width:120px" value="${formatMoneyInput(calcAmountInc(line.amountEx, line.taxType))}" /></td>
           <td class="actions"><button type="button" class="link-action js-purchase-del">削除</button></td>`;
         bulkTableBody.appendChild(tr);
       });
-      bindDelAndTotals(bulkTableBody, updateBulkTotals);
+      bindDelAndTotals(bulkTableBody, () => {
+        applyBulkViewFilter();
+        updateBulkTotals();
+      });
+      applyBulkViewFilter();
       updateBulkTotals();
+    }
+
+    function applyBulkViewFilter() {
+      if (!bulkTableBody) return;
+      const viewKey = bulkListFilter?.value || 'all';
+      const searchRaw = bulkListSearch?.value || '';
+      const state = TocDataStore.getState();
+      bulkTableBody.querySelectorAll('tr').forEach(tr => {
+        const caseId = tr.querySelector('.js-bulk-case')?.value || '';
+        const vendorName = tr.querySelector('.js-purchase-vendor')?.value || '';
+        const invoiceDate = tr.querySelector('.js-purchase-invdate')?.value || '';
+        const c = state.cases.find(x => x.caseId === caseId);
+        const estimateNo = caseId === UID ? '' : c?.estimateNo || '';
+        const line = { vendorName, invoiceDate, estimateNo };
+        const show = bulkRowMatchesViewFilter(caseId, line, viewKey, searchRaw);
+        tr.hidden = !show;
+      });
     }
 
     function updateBulkTotals() {
       if (!totalsBulk) return;
-      const sumEx = Array.from(bulkTableBody?.querySelectorAll('tr') || []).reduce((s, tr) => {
+      const rows = Array.from(bulkTableBody?.querySelectorAll('tr') || []).filter(tr => !tr.hidden);
+      const sumEx = rows.reduce((s, tr) => {
         return s + parseMoneyInput(tr.querySelector('.js-purchase-ex')?.value);
       }, 0);
-      const sumInc = Array.from(bulkTableBody?.querySelectorAll('tr') || []).reduce((s, tr) => {
+      const sumInc = rows.reduce((s, tr) => {
         return s + parseMoneyInput(tr.querySelector('.js-purchase-inc')?.value);
       }, 0);
       totalsBulk.textContent = `税抜計 ¥${sumEx.toLocaleString('ja-JP')} ／ 税込計 ¥${sumInc.toLocaleString('ja-JP')}`;
@@ -509,13 +777,20 @@
       bulkTableBody.querySelectorAll('tr').forEach(tr => {
         const caseId = tr.querySelector('.js-bulk-case')?.value;
         if (!caseId) return;
+        const rawAt = tr.dataset.addedAt;
+        let addedAt = rawAt !== undefined && rawAt !== '' ? Number(rawAt) : NaN;
+        if (!Number.isFinite(addedAt) || addedAt <= 0) {
+          addedAt = purchaseLineAddedAtMs({ id: tr.dataset.purchaseId }) || 0;
+        }
         out.push({
           caseId,
           id: tr.dataset.purchaseId || newPurchaseId(),
           vendorName: tr.querySelector('.js-purchase-vendor')?.value || '',
           invoiceDate: tr.querySelector('.js-purchase-invdate')?.value || '',
+          taxType: normalizeTaxType(tr.querySelector('.js-purchase-tax')?.value),
           amountEx: parseMoneyInput(tr.querySelector('.js-purchase-ex')?.value),
           amountInc: parseMoneyInput(tr.querySelector('.js-purchase-inc')?.value),
+          addedAt,
         });
       });
       return out;
@@ -523,17 +798,21 @@
 
     function saveBulkMode() {
       const state = TocDataStore.getState();
+      const UID = TocDataStore.UNLINKED_PURCHASE_CASE_ID;
       const updates = {};
       state.cases.forEach(c => {
         updates[c.caseId] = [];
       });
+      updates[UID] = [];
       collectBulkLines().forEach(line => {
         updates[line.caseId].push({
           id: line.id,
           vendorName: line.vendorName,
           invoiceDate: line.invoiceDate,
+          taxType: line.taxType,
           amountEx: line.amountEx,
           amountInc: line.amountInc,
+          addedAt: line.addedAt || 0,
         });
       });
       TocDataStore.replacePurchasesForCases(updates);
@@ -546,6 +825,10 @@
     if (tabBulk) tabBulk.addEventListener('click', () => setMode('bulk'));
 
     populateCaseDropdown();
+    enhanceSearchableSelect(caseBaseSelect, '見積No.・取引先・物件名で検索');
+    enhanceSearchableSelect(invVendor, '仕入先名で検索');
+    enhanceSearchableSelect(invDate, '請求日で検索');
+    enhanceSearchableSelect(newInvoiceVendor, '仕入先名で検索');
     if (urlCaseId && caseBaseSelect) {
       caseBaseSelect.value = urlCaseId;
       if (hid) hid.value = urlCaseId;
@@ -561,13 +844,15 @@
       if (!tbodyCase) return;
       const tr = document.createElement('tr');
       tr.dataset.purchaseId = newPurchaseId();
-      const opts = vendorOptionsHtml('');
+      const opts = vendorOptionsHtml('', 'case');
+      const taxOpts = taxTypeOptionsHtml('taxable');
       tr.innerHTML = `
         <td class="num">0</td>
         <td><select class="toolbar__select js-purchase-vendor" style="min-width:200px">${opts}</select></td>
         <td><input type="date" class="toolbar__search-input js-purchase-invdate" value="" /></td>
+        <td><select class="toolbar__select js-purchase-tax" style="min-width:110px">${taxOpts}</select></td>
         <td class="num"><input type="text" class="toolbar__search-input js-purchase-ex" style="text-align:right;width:120px" value="0" /></td>
-        <td class="num"><input type="text" class="toolbar__search-input js-purchase-inc" style="text-align:right;width:120px" value="0" /></td>
+        <td class="num"><input type="text" class="toolbar__search-input js-purchase-inc" style="text-align:right;width:120px" value="${formatMoneyInput(calcAmountInc(0, 'taxable'))}" /></td>
         <td class="actions"><button type="button" class="link-action js-purchase-del">削除</button></td>`;
       tbodyCase.appendChild(tr);
       renumber(tbodyCase);
@@ -575,49 +860,72 @@
       updateCaseTotals();
     });
 
-    fillVendorSelect(invVendor);
-    invVendor?.addEventListener('change', syncInvoiceDetailFromToolbar);
-    invDate?.addEventListener('change', syncInvoiceDetailFromToolbar);
-    btnNewInvoice?.addEventListener('click', () => {
-      invoiceKeyTableBody?.querySelectorAll('.invoice-key-row').forEach(x => x.classList.remove('is-selected'));
+    fillVendorSelect(invVendor, '', 'invoice');
+
+    invVendor?.addEventListener('change', () => {
+      fillInvoiceDateSelect('');
       clearInvoiceDetail();
-      applyInvoiceToolbarVendorDate('', '');
+      lastInvoiceKeyContext = null;
+    });
+    invDate?.addEventListener('change', () => syncInvoiceDetailFromToolbar());
+
+    btnNewInvoice?.addEventListener('click', () => {
+      if (newInvoiceVendor) {
+        newInvoiceVendor.innerHTML = vendorOptionsHtml((invVendor?.value || '').trim(), 'invoice');
+      }
+      if (newInvoiceDate) {
+        newInvoiceDate.value = '';
+      }
+      newInvoiceDialog?.showModal();
+    });
+
+    document.getElementById('newInvoiceCancel')?.addEventListener('click', () => {
+      newInvoiceDialog?.close();
+    });
+
+    document.getElementById('newInvoiceConfirm')?.addEventListener('click', () => {
+      const v = (newInvoiceVendor?.value || '').trim();
+      const d = normInvoiceDateStr(newInvoiceDate?.value || '');
+      if (!v) {
+        alert('仕入先を選択してください。');
+        return;
+      }
+      if (!d) {
+        alert('請求日を入力してください。');
+        return;
+      }
+      newInvoiceDialog?.close();
+      applyInvoiceToolbarVendorDate(v, d);
+      syncInvoiceDetailFromToolbar();
     });
 
     btnAddInvoiceRow?.addEventListener('click', () => {
-      const selectedTr = invoiceKeyTableBody?.querySelector('.invoice-key-row.is-selected');
       let vendor = '';
       let idate = '';
-      if (selectedTr) {
-        const k = readKeyRowVendorDate(selectedTr);
-        vendor = k.vendor;
-        idate = k.date;
-      } else {
-        const hasDetailRows = (invoiceDetailBody?.querySelectorAll('tr').length || 0) > 0;
-        if (hasDetailRows && lastInvoiceKeyContext) {
-          vendor = (lastInvoiceKeyContext.vendor || '').trim();
-          idate = normInvoiceDateStr(lastInvoiceKeyContext.date || '');
-        }
-        if (!vendor) vendor = (invVendor?.value || '').trim();
-        if (!idate) idate = normInvoiceDateStr(invDate?.value || '');
+      const hasDetailRows = (invoiceDetailBody?.querySelectorAll('tr').length || 0) > 0;
+      if (hasDetailRows && lastInvoiceKeyContext) {
+        vendor = (lastInvoiceKeyContext.vendor || '').trim();
+        idate = normInvoiceDateStr(lastInvoiceKeyContext.date || '');
       }
+      if (!vendor) vendor = (invVendor?.value || '').trim();
+      if (!idate) idate = normInvoiceDateStr(invDate?.value || '');
 
       if (!vendor || !idate) {
         alert(
-          '仕入先と請求日（請求書の日付）の両方が必要です。\n' +
-            '・上の「請求書一覧」で行をクリックするか、下で仕入先と請求日を指定してから追加してください。'
+          '仕入先と請求日の両方が必要です。\n上で選ぶか、「新規作成」から指定してください。'
         );
         return;
       }
       applyInvoiceToolbarVendorDate(vendor, idate);
       const tr = document.createElement('tr');
       tr.dataset.purchaseId = newPurchaseId();
-      const firstCase = TocDataStore.getState().cases[0]?.caseId || '';
+      const taxOpts = taxTypeOptionsHtml('taxable');
       tr.innerHTML = `
         <td class="num">0</td>
-        <td><select class="toolbar__select js-inv-case" style="min-width:260px">${caseOptionsHtml(firstCase)}</select></td>
+        <td><select class="toolbar__select js-inv-case" style="min-width:260px">${caseOptionsHtmlInvoiceDetail('')}</select></td>
+        <td><select class="toolbar__select js-purchase-tax" style="min-width:110px">${taxOpts}</select></td>
         <td class="num"><input type="text" class="toolbar__search-input js-purchase-ex" style="text-align:right;width:120px" value="0" /></td>
-        <td class="num"><input type="text" class="toolbar__search-input js-purchase-inc" style="text-align:right;width:120px" value="0" /></td>
+        <td class="num"><input type="text" class="toolbar__search-input js-purchase-inc" style="text-align:right;width:120px" value="${formatMoneyInput(calcAmountInc(0, 'taxable'))}" /></td>
         <td class="actions"><button type="button" class="link-action js-purchase-del">削除</button></td>`;
       invoiceDetailBody.appendChild(tr);
       renumber(invoiceDetailBody);
@@ -629,20 +937,39 @@
       if (!bulkTableBody) return;
       const tr = document.createElement('tr');
       tr.dataset.purchaseId = newPurchaseId();
-      const opts = vendorOptionsHtml('');
-      const cid = TocDataStore.getState().cases[0]?.caseId || '';
+      tr.dataset.addedAt = String(Date.now());
+      const opts = vendorOptionsHtml('', 'bulk');
+      const taxOpts = taxTypeOptionsHtml('taxable');
       tr.innerHTML = `
         <td class="num">0</td>
-        <td><select class="toolbar__select js-bulk-case" style="min-width:240px">${caseOptionsHtml(cid)}</select></td>
+        <td><select class="toolbar__select js-bulk-case" style="min-width:240px">${caseOptionsHtmlBulk('')}</select></td>
         <td><select class="toolbar__select js-purchase-vendor" style="min-width:200px">${opts}</select></td>
         <td><input type="date" class="toolbar__search-input js-purchase-invdate" value="" /></td>
+        <td><select class="toolbar__select js-purchase-tax" style="min-width:110px">${taxOpts}</select></td>
         <td class="num"><input type="text" class="toolbar__search-input js-purchase-ex" style="text-align:right;width:120px" value="0" /></td>
-        <td class="num"><input type="text" class="toolbar__search-input js-purchase-inc" style="text-align:right;width:120px" value="0" /></td>
+        <td class="num"><input type="text" class="toolbar__search-input js-purchase-inc" style="text-align:right;width:120px" value="${formatMoneyInput(calcAmountInc(0, 'taxable'))}" /></td>
         <td class="actions"><button type="button" class="link-action js-purchase-del">削除</button></td>`;
-      bulkTableBody.appendChild(tr);
+      bulkTableBody.insertBefore(tr, bulkTableBody.firstChild);
       renumber(bulkTableBody);
-      bindDelAndTotals(bulkTableBody, updateBulkTotals);
+      bindDelAndTotals(bulkTableBody, () => {
+        applyBulkViewFilter();
+        updateBulkTotals();
+      });
+      applyBulkViewFilter();
       updateBulkTotals();
+    });
+
+    bulkListFilter?.addEventListener('change', () => {
+      if (panelBulk && !panelBulk.hidden) {
+        applyBulkViewFilter();
+        updateBulkTotals();
+      }
+    });
+    bulkListSearch?.addEventListener('input', () => {
+      if (panelBulk && !panelBulk.hidden) {
+        applyBulkViewFilter();
+        updateBulkTotals();
+      }
     });
 
     document.getElementById('btnSaveCaseToolbar')?.addEventListener('click', () => saveCaseMode());

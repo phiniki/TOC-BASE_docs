@@ -63,13 +63,22 @@
         </a>
       </li>
       <li class="sidebar-nav__item">
-        <a href="case-purchases.html" class="sidebar-nav__link" data-nav="purchases">
+        <a href="media-mgmt.html" class="sidebar-nav__link" data-nav="media-mgmt">
+          <svg class="sidebar-nav__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="4" width="18" height="16" rx="2"/>
+            <line x1="7" y1="8" x2="17" y2="8"/><line x1="7" y1="12" x2="17" y2="12"/><line x1="7" y1="16" x2="13" y2="16"/>
+          </svg>
+          媒体管理
+        </a>
+      </li>
+      <li class="sidebar-nav__item">
+        <a href="case-purchases.html" class="sidebar-nav__link" data-nav="purchase-mgmt">
           <svg class="sidebar-nav__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/>
             <line x1="3" y1="6" x2="21" y2="6"/>
             <path d="M16 10a4 4 0 01-8 0"/>
           </svg>
-          仕入登録
+          仕入管理
         </a>
       </li>
     </ul>
@@ -190,6 +199,15 @@
       </div>
 
       <div class="toolbar__actions-end">
+        <button
+          type="button"
+          class="btn btn--ghost btn--sm toolbar__toggle-invoiced"
+          id="showInvoicedCasesBtn"
+          aria-pressed="false"
+          aria-label="請求済みの案件を一覧に含める"
+        >
+          請求済みも表示
+        </button>
         <button type="button" class="btn btn--ghost btn--sm" id="filterResetBtn">条件クリア</button>
         <span class="toolbar__count" id="rowCount">5 件表示</span>
       </div>
@@ -228,14 +246,11 @@
               <th data-col="12" style="min-width:92px" title="実際原価÷予想原価">仕入利用率</th>
               <th data-col="13" style="min-width:64px">条例</th>
               <th data-col="14" style="min-width:100px">請求予定月</th>
-              <th data-col="15" style="min-width:100px">着工日</th>
-              <th data-col="16" style="min-width:120px">内容状況（進捗メモ）</th>
-              <th data-col="17" style="min-width:88px">ステータス</th>
-              <th data-col="18" style="min-width:88px">発注書状況</th>
-              <th data-col="19" style="min-width:120px">請求</th>
-              <th data-col="20" style="min-width:64px">入金済</th>
-              <th data-col="21" style="min-width:100px">入金日</th>
-              <th data-col="22" style="min-width:56px">編集</th>
+              <th data-col="15" style="min-width:120px">内容状況（進捗メモ）</th>
+              <th data-col="16" style="min-width:88px">ステータス</th>
+              <th data-col="17" style="min-width:120px">請求</th>
+              <th data-col="18" style="min-width:96px">媒体管理</th>
+              <th data-col="19" style="min-width:56px">編集</th>
             </tr>
           </thead>
           <tbody id="casesTableBody"></tbody>

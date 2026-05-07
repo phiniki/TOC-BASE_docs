@@ -3,17 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>TOC-BASE | 仕入先マスタ</title>
+  <title>TOC-BASE | 媒体管理</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="css/style.css" />
   <link rel="stylesheet" href="css/pages.css" />
-  <script src="js/data-store.js" defer></script>
-  <script src="js/nav.js" defer></script>
-  <script src="js/masters-ui.js" defer></script>
 </head>
-<body data-nav="vendors">
+<body data-nav="media-mgmt">
 
 <div class="app-shell">
   <header class="app-header">
@@ -121,7 +118,8 @@
           仕入先マスタ
         </a>
       </li>
-    </ul>    <span class="sidebar-section-label">設定・ツール</span>
+    </ul>
+    <span class="sidebar-section-label">設定・ツール</span>
     <ul class="sidebar-nav">
       <li class="sidebar-nav__item">
         <a href="settings-goals.html" class="sidebar-nav__link" data-nav="goals">
@@ -138,53 +136,82 @@
   <main class="app-main page-scroll page-stack">
     <div class="page-header">
       <div>
-        <h1 class="page-header__title">仕入先マスタ</h1>
+        <h1 class="page-header__title">媒体管理</h1>
       </div>
       <div class="page-header__actions">
-        <a href="master-vendor-form.html" class="btn btn--primary btn--sm">＋ 新規仕入先</a>
+        <button type="button" class="btn btn--primary btn--sm" id="btnMediaNew">＋ 新規登録</button>
       </div>
     </div>
 
     <div class="page-toolbar">
       <div class="page-search">
         <span class="page-search__icon">&#128269;</span>
-        <input type="search" placeholder="仕入先名・カナ・コードで検索…" aria-label="検索" />
+        <input type="search" id="mediaSearchInput" placeholder="キーワード（全項目から検索）" aria-label="検索" />
       </div>
-      <div class="page-filters">
-        <label for="fVenType">区分</label>
-        <select id="fVenType">
-          <option>すべて</option>
-          <option>法人</option>
-          <option>個人</option>
-        </select>
-        <label for="fVenStatus">状態</label>
-        <select id="fVenStatus">
-          <option>すべて</option>
-          <option>取引中</option>
-          <option>休止</option>
-        </select>
-      </div>
-      <span id="masterVendorsCount" style="margin-left:auto;font-size:12px;color:#64748b;">—</span>
+      <span id="mediaRowCount" style="margin-left:auto;font-size:12px;color:#64748b;">—</span>
     </div>
 
-    <div class="list-table-wrap">
-      <table class="list-table">
+    <div class="media-table-scroll">
+      <table class="data-table data-table--media" aria-label="媒体管理一覧">
         <thead>
           <tr>
-            <th>コード</th>
-            <th>仕入先名</th>
-            <th>カナ</th>
-            <th>区分</th>
-            <th>電話番号</th>
-            <th>状態</th>
-            <th>最終更新</th>
+            <th class="col-sticky-media">見積No.</th>
+            <th>契約ステータス</th>
+            <th>契約会社</th>
+            <th>スポンサー</th>
+            <th>スポンサーTEL</th>
+            <th>意匠面</th>
+            <th>スポンサー初回契約日</th>
+            <th>スポンサー継続確認日</th>
+            <th>スポンサー継続確認期日</th>
+            <th class="num">媒体料（税別）</th>
+            <th>地主名</th>
+            <th>地主TEL</th>
+            <th>地主住所</th>
+            <th>地主初回契約日</th>
+            <th>地主継続確認日</th>
+            <th>地主継続確認期日</th>
+            <th class="num">地主への支払賃料（税別）</th>
+            <th>物件所在地</th>
+            <th>サイズ</th>
+            <th>備考</th>
+            <th>屋外広告申請</th>
+            <th class="num">撤去費（税別）</th>
+            <th>解約時募集可能</th>
+            <th>変更履歴</th>
             <th>操作</th>
           </tr>
         </thead>
-        <tbody id="masterVendorsBody"></tbody>
+        <tbody id="mediaTableBody"></tbody>
       </table>
     </div>
   </main>
 </div>
+
+<dialog id="mediaHistoryDialog" class="case-invoice-dialog media-history-dialog">
+  <div class="case-invoice-dialog__form">
+    <h2 class="case-invoice-dialog__title">変更履歴</h2>
+    <p class="case-invoice-dialog__lead" id="mediaHistoryLead"></p>
+    <div id="mediaHistoryBody" class="media-history-body"></div>
+    <div class="case-invoice-dialog__actions">
+      <button type="button" class="btn btn--primary" id="mediaHistoryClose">閉じる</button>
+    </div>
+  </div>
+</dialog>
+
+<dialog id="mediaRemarksDialog" class="case-invoice-dialog media-remarks-dialog">
+  <div class="case-invoice-dialog__form">
+    <h2 class="case-invoice-dialog__title">備考</h2>
+    <p class="case-invoice-dialog__lead" id="mediaRemarksLead"></p>
+    <div id="mediaRemarksBody" class="media-remarks-body"></div>
+    <div class="case-invoice-dialog__actions">
+      <button type="button" class="btn btn--primary" id="mediaRemarksClose">閉じる</button>
+    </div>
+  </div>
+</dialog>
+
+<script src="js/data-store.js"></script>
+<script src="js/nav.js"></script>
+<script src="js/media-mgmt.js"></script>
 </body>
 </html>

@@ -84,7 +84,10 @@ function buildCompanyBuckets(cases, ki) {
     const idx = fiscalMonthIndexForCase(c, ki);
     if (idx === null) return;
     const t = buckets[idx];
-    t.fSales += Number(c.forecastSales) || 0;
+    t.fSales +=
+      (window.TocDataStore && typeof TocDataStore.computeCaseForecastSalesEx === 'function'
+        ? TocDataStore.computeCaseForecastSalesEx(c)
+        : Number(c.forecastSales)) || 0;
     t.fCost += Number(c.forecastCost) || 0;
     t.aCost += Number(c.actualCost) || 0;
     if (c.actualSales != null) t.aSales += Number(c.actualSales) || 0;
@@ -388,8 +391,8 @@ function renderCompanyChart(labels, buckets) {
         {
           label: '実際売上',
           data: aSales,
-          borderColor: '#2563eb',
-          backgroundColor: 'rgba(37,99,235,0.08)',
+          borderColor: '#289B5C',
+          backgroundColor: 'rgba(40,155,92,0.08)',
           fill: false,
           tension: 0.25,
           pointRadius: 3,

@@ -1,10 +1,8 @@
 /**
- * 完了シート — 月別の金額・請求・入金確認（データは案件シートと同一ストア）
+ * 完了シート — 月別の金額・請求日・入金確認（データは案件シートと同一ストア）
  */
 
 const COMPLETE_MONTH_KEY = 'toc-complete-sheet-month';
-
-const DONE_OPTIONS = ['済', '未'];
 
 function escapeHtml(s) {
   return String(s ?? '')
@@ -58,7 +56,10 @@ function aggregateCompleteSheetByCategory(cases) {
       map.set(cat, { sumFS: 0, sumFC: 0, sumAS: 0, sumAC: 0 });
     }
     const r = map.get(cat);
-    r.sumFS += Number(c.forecastSales) || 0;
+    r.sumFS +=
+      (window.TocDataStore && typeof TocDataStore.computeCaseForecastSalesEx === 'function'
+        ? TocDataStore.computeCaseForecastSalesEx(c)
+        : Number(c.forecastSales)) || 0;
     r.sumFC += Number(c.forecastCost) || 0;
     const as =
       c.actualSales != null && !Number.isNaN(Number(c.actualSales)) ? Number(c.actualSales) : 0;
@@ -216,8 +217,19 @@ function buildCompleteRow(c, rowNum) {
   const estDisp = estRaw ? escapeHtml(estRaw) : '—';
   const actualSalesInner = c.actualSales == null ? '—' : formatMoney(c.actualSales);
   const invVal = toDateInputValue(c.invoiceDate);
-  const payVal = toDateInputValue(c.payDate);
-  const fs = c.forecastSales != null ? Number(c.forecastSales) : 0;
+  const invDisp = invVal ? escapeHtml(invVal) : '—';
+  const payDone = String(c.paidDone ?? '').trim() === '済';
+  const payD = toDateInputValue(c.payDate);
+  const paySort = payDone && payD ? payD : payDone ? '0000-01-01' : '';
+  const payCellInner = payDone
+    ? `<div class="cell-pay-stack"><span class="cell-pay-date">${escapeHtml(payD || '—')}</span></div>`
+    : `<div class="cell-pay-stack"><button type="button" class="link-action link-action--btn js-paid-done">入金済みにする</button></div>`;
+  const fs =
+    window.TocDataStore && typeof TocDataStore.computeCaseForecastSalesEx === 'function'
+      ? TocDataStore.computeCaseForecastSalesEx(c)
+      : c.forecastSales != null
+        ? Number(c.forecastSales)
+        : 0;
   const fc = c.forecastCost != null ? Number(c.forecastCost) : 0;
   const fProfit = fs - fc;
   const fRate = fs !== 0 ? fProfit / fs : null;
@@ -240,20 +252,14 @@ function buildCompleteRow(c, rowNum) {
     <td class="cell-num" data-field="actual_profit">—</td>
     <td class="cell-rate" data-field="actual_gross_rate">—</td>
     <td class="cell-num" data-field="margin_rate_diff">—</td>
-    <td data-editable data-edit="select-inv" data-initial-value="${escapeHtml(c.invoiceDone)}"></td>
-    <td class="cell-date cell-date-input" data-date-cell="invoice"><input type="date" class="cell-native-date" value="${invVal}" aria-label="請求日" /></td>
-    <td data-editable data-edit="select-paid" data-initial-value="${escapeHtml(c.paidDone)}"></td>
-    <td class="cell-date cell-date-input" data-date-cell="pay"><input type="date" class="cell-native-date" value="${payVal}" aria-label="入金日" /></td>
+    <td class="cell-date cell-date-readonly" data-date-cell="invoice">${invDisp}</td>
+    <td class="cell-pay-col cell-actions" data-paid-done="${escapeHtml(payDone ? '済' : '未')}" data-pay-sort="${escapeHtml(paySort)}">
+      ${payCellInner}
+    </td>
     <td class="cell-num" data-editable data-edit="money" data-field="sales_tax_included">${formatMoney(c.salesTaxIncluded)}</td>
     <td class="cell-num" data-field="consumption_tax">—</td>
   `;
   return tr;
-}
-
-function cellSelectValue(td) {
-  if (!td) return '';
-  const sel = td.querySelector('.cell-native-select');
-  return sel ? sel.value : td.textContent.trim();
 }
 
 function cellMoneyOrZero(td) {
@@ -270,25 +276,10 @@ function cellMoneyOptional(td) {
   return Number.isNaN(n) ? null : n;
 }
 
-function cellNativeDateValue(td) {
-  if (!td) return '—';
-  const inp = td.querySelector('input.cell-native-date');
-  if (inp) return inp.value ? inp.value : '—';
-  return td.textContent.trim() || '—';
-}
-
 function readCompletePatch(tr) {
-  const invTd = tr.querySelector('[data-edit="select-inv"]');
-  const paidTd = tr.querySelector('[data-edit="select-paid"]');
-  const invDateTd = tr.querySelector('[data-date-cell="invoice"]');
-  const payDateTd = tr.querySelector('[data-date-cell="pay"]');
   return {
-    invoiceDone: cellSelectValue(invTd),
-    invoiceDate: cellNativeDateValue(invDateTd),
     actualCost: cellMoneyOrZero(getFieldCell(tr, 'actual_cost')),
     actualSales: cellMoneyOptional(getFieldCell(tr, 'actual_sales')),
-    payDate: cellNativeDateValue(payDateTd),
-    paidDone: cellSelectValue(paidTd),
     salesTaxIncluded: cellMoneyOrZero(getFieldCell(tr, 'sales_tax_included')),
   };
 }
@@ -299,7 +290,12 @@ function persistCompleteRow(tr) {
   const prev = TocDataStore.getCase(caseId);
   if (!prev) return;
   const patch = readCompletePatch(tr);
-  TocDataStore.upsertCase({ ...prev, ...patch });
+  TocDataStore.upsertCase({
+    ...prev,
+    ...patch,
+    invoiceDate: prev.invoiceDate,
+    invoiceDone: prev.invoiceDone,
+  });
 }
 
 function getFieldCell(row, field) {
@@ -367,45 +363,64 @@ function recalcCompleteRow(row) {
   renderCategorySummary();
 }
 
-function initDoneSelects(root = document) {
-  const configs = [
-    { attr: 'select-inv', labels: ['請求済'] },
-    { attr: 'select-paid', labels: ['入金済'] },
-  ];
-  configs.forEach(({ attr }) => {
-    root.querySelectorAll(`td[data-edit="${attr}"]`).forEach(td => {
-      if (td.querySelector('.cell-native-select')) return;
-      let cur = td.dataset.initialValue || '未';
-      if (!DONE_OPTIONS.includes(cur)) cur = '未';
-      td.classList.add('cell-select-td');
-      td.innerHTML = '';
-      const sel = document.createElement('select');
-      sel.className = 'cell-native-select';
-      DONE_OPTIONS.forEach(o => {
-        const opt = document.createElement('option');
-        opt.value = o;
-        opt.textContent = o;
-        if (o === cur) opt.selected = true;
-        sel.appendChild(opt);
-      });
-      td.appendChild(sel);
-      sel.addEventListener('change', () => {
-        persistCompleteRow(td.closest('tr'));
-        applyCompleteMonthFilter();
-      });
-      delete td.dataset.initialValue;
-    });
-  });
-}
+function initCompletePaidDoneDialog() {
+  const dialog = document.getElementById('paidDoneDialog');
+  const form = document.getElementById('paidDoneForm');
+  const dateInp = document.getElementById('paidDoneDate');
+  const label = document.getElementById('paidDoneCaseLabel');
+  const btnCancel = document.getElementById('paidDoneCancel');
+  if (!dialog || !form || !window.TocDataStore) return;
 
-function initCompleteDateInputs(root = document) {
-  root.querySelectorAll('input.cell-native-date').forEach(inp => {
-    if (inp.dataset.bound === '1') return;
-    inp.dataset.bound = '1';
-    inp.addEventListener('change', () => {
-      recalcCompleteRow(inp.closest('tr'));
-      applyCompleteMonthFilter();
+  let paidDialogCaseId = null;
+
+  document.getElementById('completeTableBody')?.addEventListener('click', e => {
+    const btn = e.target.closest('.js-paid-done');
+    if (!btn) return;
+    const tr = btn.closest('tr');
+    const caseId = tr?.dataset.caseId;
+    if (!caseId) return;
+    paidDialogCaseId = caseId;
+    const c = TocDataStore.getCase(caseId);
+    const est = (c?.estimateNo && String(c.estimateNo).trim()) || '—';
+    if (label) {
+      label.textContent = c ? `${c.client || '—'} / 見積 ${est}` : '';
+    }
+    if (dateInp) {
+      const existing = c && String(c.paidDone ?? '').trim() === '済' ? toDateInputValue(c.payDate) : '';
+      dateInp.value = existing || new Date().toISOString().slice(0, 10);
+    }
+    if (dialog.showModal) dialog.showModal();
+  });
+
+  btnCancel?.addEventListener('click', () => {
+    paidDialogCaseId = null;
+    dialog.close();
+  });
+
+  form.addEventListener('submit', e => {
+    e.preventDefault();
+    if (!paidDialogCaseId || !dateInp?.value) {
+      alert('入金日を入力してください。');
+      return;
+    }
+    const prev = TocDataStore.getCase(paidDialogCaseId);
+    if (!prev) {
+      paidDialogCaseId = null;
+      dialog.close();
+      return;
+    }
+    TocDataStore.upsertCase({
+      ...prev,
+      paidDone: '済',
+      payDate: dateInp.value,
     });
+    paidDialogCaseId = null;
+    dialog.close();
+    hydrateCompleteTable();
+  });
+
+  dialog.addEventListener('close', () => {
+    paidDialogCaseId = null;
   });
 }
 
@@ -494,13 +509,12 @@ function hydrateCompleteTable() {
   const ym = getCompleteSelectedYm(periodSelect, monthSelect);
   saveMonthYm(ym);
 
-  const cases = TocDataStore.getState().cases.filter(c => caseTouchesMonth(c, ym));
+  const filtered = TocDataStore.getState().cases.filter(c => caseTouchesMonth(c, ym));
+  const cases = TocDataStore.sortCasesByCreatedDesc(filtered);
   tbody.innerHTML = '';
   cases.forEach((c, i) => tbody.appendChild(buildCompleteRow(c, i + 1)));
 
   assignCompleteColumnIndices();
-  initDoneSelects(tbody);
-  initCompleteDateInputs(tbody);
   tbody.querySelectorAll('tr').forEach(recalcCompleteRow);
 
   const f = TocFiscal.calendarYmToFiscal(ym) || TocFiscal.currentFiscal();
@@ -548,6 +562,23 @@ function initCompleteSort() {
       rows.sort((a, b) => {
         const ac = a.cells[idx];
         const bc = b.cells[idx];
+
+        if (ac?.classList.contains('cell-pay-col') && bc?.classList.contains('cell-pay-col')) {
+          const paySortKey = cell => {
+            if (!cell) return null;
+            const s = cell.dataset.paySort || '';
+            if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+            if (cell.dataset.paidDone === '済') return '0000-01-01';
+            return null;
+          };
+          const av = paySortKey(ac);
+          const bv = paySortKey(bc);
+          if (av === null && bv === null) return 0;
+          if (av === null) return 1;
+          if (bv === null) return -1;
+          return sortState.asc ? av.localeCompare(bv) : bv.localeCompare(av);
+        }
+
         const sel = ac?.querySelector('.cell-native-select');
         const av = sel ? sel.value : ac?.textContent.trim() ?? '';
         const bv = bc?.querySelector('.cell-native-select')?.value ?? bc?.textContent.trim() ?? '';
@@ -575,6 +606,8 @@ document.addEventListener('DOMContentLoaded', () => {
   if (window.TocDataStore) {
     hydrateCompleteTable();
   }
+
+  initCompletePaidDoneDialog();
 
   const periodSelect = document.getElementById('fiscalPeriodSelect');
   const monthSelect = document.getElementById('fiscalMonthSelect');
