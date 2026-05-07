@@ -83,23 +83,23 @@
         </div>
         <div class="form-field form-field--full"><label for="m_designFace">意匠面</label><input id="m_designFace" type="text" /></div>
         <div class="form-field"><label for="m_size">サイズ</label><input id="m_size" type="text" /></div>
-        <div class="form-field">
+        <div class="form-field form-field--full">
           <label for="m_mediaFeeEx">媒体料（税別）</label>
           <input id="m_mediaFeeEx" type="text" inputmode="numeric" />
-          <label style="display:flex;align-items:center;gap:6px;margin-top:6px;font-size:12px">
+          <label class="media-inline-check">
             <input id="m_mediaFeeIncludeFirstInvoice" type="checkbox" checked />
             初回請求に初回契約年数分を含む
           </label>
         </div>
-        <div class="form-field">
+        <div class="form-field form-field--full">
           <label for="m_landlordRentEx">地主への支払賃料（税別）</label>
           <input id="m_landlordRentEx" type="text" inputmode="numeric" />
-          <label style="display:flex;align-items:center;gap:6px;margin-top:6px;font-size:12px">
+          <label class="media-inline-check">
             <input id="m_landlordRentIncludeFirstInvoice" type="checkbox" checked />
             初回請求に含む
           </label>
         </div>
-        <div class="form-field"><label for="m_removalCostEx">撤去費（税別）</label><input id="m_removalCostEx" type="text" inputmode="numeric" /></div>
+        <div class="form-field form-field--full"><label for="m_removalCostEx">撤去費（税別）</label><input id="m_removalCostEx" type="text" inputmode="numeric" /></div>
 
         <div class="form-field form-field--full media-edit-section-title">物件情報</div>
         <div class="form-field form-field--full"><label for="m_propertyLocation">物件所在地</label><input id="m_propertyLocation" type="text" /></div>

@@ -900,6 +900,17 @@ a.link-action {
   font-size: 12px;
 }
 
+.media-edit-grid .media-inline-check {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #334155;
+}
+
 .media-edit-grid label.span-2 {
   grid-column: span 2;
 }
